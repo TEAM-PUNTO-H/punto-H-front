@@ -1,0 +1,14 @@
+
+services:
+  angular-app:
+    build: .
+    container_name: angular-app
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    networks:
+      - my-microservices-net
+
+networks:
+  my-microservices-net:
+    external: true
