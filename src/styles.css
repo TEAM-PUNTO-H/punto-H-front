@@ -1,1 +1,206 @@
-/* You can add global styles to this file, and also import other style files */
+/* ==== Estilos globales ==== */
+body {
+  margin: 0;
+  font-family: "Inter", sans-serif;
+  background-color: #f9fafb;
+  color: #333;
+}
+
+/* Centrado general de secciones */
+.section {
+  display: none;
+}
+
+.section.active {
+  display: flex;
+}
+
+.min-h-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+}
+
+/* Contenedor principal del formulario */
+.form-container {
+  max-width: 420px;
+  width: 100%;
+  background: #fff;
+  border-radius: 1rem;
+  padding: 2.5rem 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Logo “H” naranja */
+.logo {
+  width: 64px;
+  height: 64px;
+  background-color: #f97316;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem auto;
+}
+
+.logo span {
+  color: white;
+  font-weight: 700;
+  font-size: 1.8rem;
+}
+
+/* Títulos */
+h2 {
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.25rem;
+}
+
+p.subtitle {
+  text-align: center;
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+}
+
+/* Formularios */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.3rem;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.6rem;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: transparent;
+  box-shadow: 0 0 0 3px #fb923c80; /* Naranja translúcido */
+}
+
+/* Botones */
+button {
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-orange {
+  background-color: #f97316;
+  color: #fff;
+  padding: 0.85rem 1rem;
+  border-radius: 0.6rem;
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.btn-orange:hover {
+  background-color: #ea580c;
+}
+
+.btn-outline {
+  background: #fff;
+  border: 1px solid #d1d5db;
+  color: #555;
+}
+
+.btn-outline:hover {
+  background: #f3f4f6;
+}
+
+/* Enlaces pequeños */
+.text-center {
+  text-align: center;
+}
+
+.text-small {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.text-small a,
+.text-orange {
+  color: #f97316;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.text-orange:hover {
+  color: #ea580c;
+}
+
+/* Separador */
+.divider {
+  position: relative;
+  margin: 1.5rem 0;
+  text-align: center;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background: #d1d5db;
+}
+
+.divider::before {
+  left: 0;
+}
+
+.divider::after {
+  right: 0;
+}
+
+.divider span {
+  background: #fff;
+  color: #9ca3af;
+  font-size: 0.9rem;
+  padding: 0 0.5rem;
+}
+
+/* Checkbox y opciones */
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.checkbox-group input {
+  width: 18px;
+  height: 18px;
+  accent-color: #f97316;
+}
+
+/* Mensajes de error */
+.error-message {
+  color: #ef4444;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.w-full {
+  width: 100%;
+}

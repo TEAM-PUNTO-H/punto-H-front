@@ -1,0 +1,61 @@
+<div class="min-h-screen">
+  <div class="form-container">
+    <div class="text-center">
+      <div class="logo">
+        <span>H</span>
+      </div>
+      <h2>Iniciar Sesión</h2>
+      <p class="subtitle">Accede a tu cuenta de Punto H</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <div>
+        <label for="email">Correo electrónico</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="tu.correo@universidad.edu"
+          required
+        />
+      </div>
+
+      <div>
+        <label for="password">Contraseña</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          placeholder="Tu contraseña"
+          required
+        />
+      </div>
+
+      <div class="checkbox-group" style="justify-content: space-between;">
+        <label class="checkbox-group">
+          <input type="checkbox" formControlName="rememberMe" /> Recordarme
+        </label>
+        <a href="#" class="text-orange">¿Olvidaste tu contraseña?</a>
+      </div>
+
+      <button type="submit" class="btn-orange w-full">Iniciar Sesión</button>
+
+      <div class="text-center text-small">
+        ¿No tienes cuenta?
+        <a routerLink="/register" class="text-orange">Regístrate aquí</a>
+      </div>
+
+      <div class="divider">
+        <span>O continúa con</span>
+      </div>
+
+      <button type="button" class="btn-outline w-full">
+        📧 Continuar con Google
+      </button>
+    </form>
+
+    <div class="text-center" style="margin-top: 1rem;">
+      <a routerLink="/" class="text-small">← Volver al inicio</a>
+    </div>
+  </div>
+</div>
