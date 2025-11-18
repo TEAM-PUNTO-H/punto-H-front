@@ -1,10 +1,18 @@
 import { Routes } from '@angular/router';
+import { HomePage } from './pages/home/home';
+import { CatalogPage } from './pages/catalog/catalog';
+import { CartPage } from './pages/cart/cart';
 import { Login } from './pages/login/login';
 import { Register } from './pages/register/register';
+import { ProfileComponent } from './pages/profile/profile';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: '', component: HomePage },
+  { path: 'home', component: HomePage },
+  { path: 'catalog', component: CatalogPage },
+  { path: 'cart', component: CartPage },
   { path: 'login', component: Login },
   { path: 'register', component: Register },
-  { path: '**', redirectTo: 'login' }
+  { path: 'profile', component: ProfileComponent },
+  { path: '**', redirectTo: '' }
 ];

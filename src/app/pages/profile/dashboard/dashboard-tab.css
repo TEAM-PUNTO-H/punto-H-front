@@ -1,0 +1,112 @@
+.grid-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.main-col h3 {
+  margin-bottom: 0.75rem;
+  color: #0f172a;
+}
+
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid #e6e9ef;
+  box-shadow: 0 2px 6px rgba(16,24,40,0.04);
+}
+
+.card.quick {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.card.quick:hover {
+  background: #fff7ed;
+  border-color: #f97316;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.15);
+  transform: translateY(-2px);
+}
+
+.card.quick:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(16,24,40,0.08);
+  background: #ffedd5;
+}
+
+.icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: #fff7ed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  transition: all 0.2s ease;
+}
+
+.card.quick:hover .icon {
+  background: #f97316;
+  transform: scale(1.1);
+}
+
+.card.quick:active .icon {
+  transform: scale(0.95);
+}
+
+.order-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+.badge.yellow { background:#fffbeb;color:#92400e; }
+.badge.green { background:#ecfdf5;color:#065f46; }
+
+.order-right .price {
+  font-weight: 700;
+  margin-top: 0.5rem;
+  color:#111827;
+}
+
+.side-col h3 { margin-bottom: 0.75rem; }
+
+.stat-row {
+  display:flex;
+  justify-content:space-between;
+  padding:0.55rem 0;
+  border-bottom:1px solid #f1f5f9;
+}
+
+.activity .act-row {
+  display:flex;
+  gap:0.75rem;
+  align-items:center;
+  padding:0.6rem 0;
+}
+.muted { color:#6b7280; }
+.small { font-size:0.85rem; color:#94a3b8; }
+.green { color:#059669; }
+

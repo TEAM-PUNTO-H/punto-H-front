@@ -1,0 +1,34 @@
+<div class="personal-wrap">
+  <h3>Información Personal</h3>
+  <form [formGroup]="profileForm" (ngSubmit)="save()" class="card form-card">
+    <label>
+      Nombre completo
+      <input formControlName="name" type="text">
+    </label>
+
+    <label>
+      Correo electrónico
+      <input formControlName="email" type="email" readonly>
+      <small class="muted">El correo no se puede modificar</small>
+    </label>
+
+    <label>
+      Teléfono
+      <input formControlName="phone" type="tel">
+    </label>
+
+    <label>
+      Dirección de entrega
+      <textarea formControlName="address" rows="3"></textarea>
+    </label>
+
+    <div class="checkboxes">
+      <label><input type="checkbox" formControlName="notificationsEmail"> Notificaciones por email</label>
+      <label><input type="checkbox" formControlName="notificationsPush"> Notificaciones push</label>
+      <label><input type="checkbox" formControlName="promotions"> Promociones y ofertas</label>
+    </div>
+
+    <button class="btn-orange" type="submit">Guardar Cambios</button>
+  </form>
+</div>
+

@@ -1,0 +1,90 @@
+<div class="grid-layout">
+  <div class="main-col">
+    <h3>Accesos Rápidos</h3>
+
+    <div class="quick-grid">
+      <div class="card quick" (click)="goToOrders()">
+        <div class="icon">📦</div>
+        <div>
+          <h4>Mis Pedidos</h4>
+          <p>Ver historial completo</p>
+        </div>
+      </div>
+
+      <div class="card quick" (click)="goToReviews()">
+        <div class="icon">⭐</div>
+        <div>
+          <h4>Mis Reseñas</h4>
+          <p>Gestionar reseñas</p>
+        </div>
+      </div>
+
+      <div class="card quick" (click)="goToOrder()">
+        <div class="icon">🍽️</div>
+        <div>
+          <h4>Hacer Pedido</h4>
+          <p>Explorar menús</p>
+        </div>
+      </div>
+
+      <div class="card quick" (click)="goToCart()">
+        <div class="icon">🛒</div>
+        <div>
+          <h4>Mi Carrito</h4>
+          <p>Finalizar compra</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>Pedidos Recientes</h3>
+
+    <div class="space-col">
+      <div class="card order">
+        <div class="order-inner">
+          <div>
+            <h4>Pedido #001</h4>
+            <p class="muted">Tacos al Pastor, Bowl de Quinoa</p>
+            <p class="muted small">15 Nov 2024, 2:30 PM</p>
+          </div>
+          <div class="order-right">
+            <span class="badge yellow">En preparación</span>
+            <p class="price">$110</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card order">
+        <div class="order-inner">
+          <div>
+            <h4>Pedido #002</h4>
+            <p class="muted">Burger Clásica, Café Americano</p>
+            <p class="muted small">14 Nov 2024, 1:15 PM</p>
+          </div>
+          <div class="order-right">
+            <span class="badge green">Entregado</span>
+            <p class="price">$100</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <aside class="side-col">
+    <h3>Información de Cuenta</h3>
+
+    <div class="card stats">
+      <div class="stat-row"><span>Pedidos realizados</span><strong>23</strong></div>
+      <div class="stat-row"><span>Total gastado</span><strong class="green">$1,250</strong></div>
+      <div class="stat-row"><span>Reseñas escritas</span><strong>8</strong></div>
+      <div class="stat-row"><span>Favoritos</span><strong>5</strong></div>
+    </div>
+
+    <div class="card activity">
+      <h4>Actividad Reciente</h4>
+      <div class="act-row"><span>📦</span><div><strong>Pedido realizado</strong><p class="muted small">Hace 2 horas</p></div></div>
+      <div class="act-row"><span>⭐</span><div><strong>Reseña publicada</strong><p class="muted small">Hace 1 día</p></div></div>
+      <div class="act-row"><span>❤️</span><div><strong>Restaurante favorito</strong><p class="muted small">Hace 3 días</p></div></div>
+    </div>
+  </aside>
+</div>
+
