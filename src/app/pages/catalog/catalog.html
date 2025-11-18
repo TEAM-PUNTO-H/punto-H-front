@@ -1,4 +1,126 @@
-<section class="placeholder-page">
-  <h1>Esta es la página del catálogo</h1>
-</section>
+<div class="catalog-page">
+  <header class="catalog-header">
+    <div class="container">
+      <!-- Barra de búsqueda sola en su layer -->
+      <div class="search-container">
+        <div class="search-wrapper">
+          <span class="search-icon">🔍</span>
+          <input 
+            placeholder="Buscar restaurantes o platos..." 
+            [(ngModel)]="searchTerm" 
+            (ngModelChange)="applyAll()" 
+            class="search-input"/>
+        </div>
+      </div>
+    </div>
+  </header>
 
+  <div class="container main">
+    <!-- Controles de ordenamiento y filtros -->
+    <div class="controls-section">
+      <div class="controls-row">
+        <select [(ngModel)]="orden" (change)="applyAll()" class="select-orden">
+          <option value="recomendados">📌 Recomendados</option>
+          <option value="calificacion">⭐ Mayor Calificación</option>
+          <option value="rapido">⚡ Más Rápido</option>
+          <option value="barato">💰 Más Barato</option>
+        </select>
+
+        <button class="btn-filtros-avanzados" (click)="showAdvancedFilters = !showAdvancedFilters">
+          <span class="filter-icon">{{ showAdvancedFilters ? '🔽' : '⚙️' }}</span>
+          Filtros Avanzados
+        </button>
+      </div>
+
+      <!-- Filtros rápidos horizontales -->
+      <div class="filtros-rapidos-row">
+        <button (click)="toggleFiltroRapido('abierto')" [class.active]="filtrosRapidos.abierto" class="filtro-rapido-btn">
+          🟢 Solo Abiertos
+        </button>
+        <button (click)="toggleFiltroRapido('delivery')" [class.active]="filtrosRapidos.delivery" class="filtro-rapido-btn">
+          🚚 Delivery Gratis
+        </button>
+        <button (click)="toggleFiltroRapido('nuevo')" [class.active]="filtrosRapidos.nuevo" class="filtro-rapido-btn">
+          ✨ Nuevos
+        </button>
+      </div>
+
+      <!-- Filtros avanzados (colapsable) -->
+      <div class="filtros-avanzados-container" *ngIf="showAdvancedFilters">
+        <div class="filtros-avanzados-content">
+          <div class="filter-group">
+            <h4>Tipo de Cocina</h4>
+            <div class="tipo-list">
+              <label><input type="checkbox" (change)="toggleFiltroTipo('mexicana')"/> Mexicana</label>
+              <label><input type="checkbox" (change)="toggleFiltroTipo('vegetariana')"/> Vegetariana</label>
+              <label><input type="checkbox" (change)="toggleFiltroTipo('cafeteria')"/> Cafetería</label>
+              <label><input type="checkbox" (change)="toggleFiltroTipo('rapida')"/> Comida Rápida</label>
+              <label><input type="checkbox" (change)="toggleFiltroTipo('japonesa')"/> Japonesa</label>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <h4>Rango de precios</h4>
+            <div class="radio-list">
+              <label><input type="radio" name="precio" value="todos" [checked]="precio === 'todos'" (change)="setPrecio('todos')"/> Todos</label>
+              <label><input type="radio" name="precio" value="bajo" [checked]="precio === 'bajo'" (change)="setPrecio('bajo')"/> $</label>
+              <label><input type="radio" name="precio" value="medio" [checked]="precio === 'medio'" (change)="setPrecio('medio')"/> $$</label>
+              <label><input type="radio" name="precio" value="alto" [checked]="precio === 'alto'" (change)="setPrecio('alto')"/> $$$</label>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <h4>Calificación mínima</h4>
+            <div class="radio-list">
+              <label><input type="radio" name="cal" value="0" [checked]="calificacion === 0" (change)="setCalificacion(0)"/> Todas</label>
+              <label><input type="radio" name="cal" value="4" [checked]="calificacion === 4" (change)="setCalificacion(4)"/> ⭐ 4.0+</label>
+              <label><input type="radio" name="cal" value="4.5" [checked]="calificacion === 4.5" (change)="setCalificacion(4.5)"/> ⭐ 4.5+</label>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <h4>Tiempo máximo (min)</h4>
+            <div class="radio-list">
+              <label><input type="radio" name="t" value="0" [checked]="tiempo === 0" (change)="setTiempo(0)"/> Cualquiera</label>
+              <label><input type="radio" name="t" value="15" [checked]="tiempo === 15" (change)="setTiempo(15)"/> 15</label>
+              <label><input type="radio" name="t" value="30" [checked]="tiempo === 30" (change)="setTiempo(30)"/> 30</label>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <label><input type="checkbox" [checked]="soloPromociones" (change)="togglePromociones()"/> 🎁 Solo promociones</label>
+          </div>
+
+          <div class="filter-group">
+            <button class="btn" (click)="limpiarFiltros()">Limpiar filtros</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- grid -->
+    <main class="grid-area">
+      <div *ngIf="restaurants.length===0" class="no-results">
+        <h3>🔍 No se encontraron resultados</h3>
+        <p>Intenta ajustar tus filtros o buscar con otros términos</p>
+        <button class="btn" (click)="limpiarFiltros()">Limpiar filtros</button>
+      </div>
+
+      <div class="grid">
+        <app-restaurant-card *ngFor="let r of restaurants"
+          [restaurant]="r"
+          (openRestaurant)="openRestaurant($event)"
+          (addDish)="agregarAlCarritoMsg($event)">
+        </app-restaurant-card>
+      </div>
+    </main>
+  </div>
+
+  <!-- notification -->
+  <div class="notification" [class.show]="showNotificationFlag">{{ notificationText }}</div>
+
+  <!-- modals -->
+  <app-restaurant-detail *ngIf="showRestaurantDetail" [restaurant]="selectedRestaurant" (close)="closeRestaurant()" (openDish)="openDish($event.rest,$event.dish)"></app-restaurant-detail>
+
+  <app-dish-detail *ngIf="showDishDetail" [dish]="selectedDish" [restaurant]="selectedDishRestaurant" (close)="closeDish()" (add)="agregarAlCarritoMsg($event)"></app-dish-detail>
+</div>

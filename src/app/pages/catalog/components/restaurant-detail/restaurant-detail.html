@@ -1,0 +1,75 @@
+<div class="modal-backdrop" (click)="closeModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <button class="close-btn" (click)="closeModal()">✕</button>
+
+    <div *ngIf="restaurant">
+      <div class="hero" [style.background]=" 'linear-gradient(90deg,#fff,rgba(0,0,0,0.03))' ">
+        <div class="emoji-big">{{ restaurant.emoji }}</div>
+      </div>
+
+      <div class="content">
+        <div class="header">
+          <h2>{{ restaurant.nombre }}</h2>
+          <span class="status" [class.open]="restaurant.abierto">{{ restaurant.abierto ? '🟢 Abierto' : '🔴 Cerrado' }}</span>
+        </div>
+
+        <p class="desc">{{ restaurant.descripcion }}</p>
+
+        <div class="restaurant-info" *ngIf="restaurant.direccion || restaurant.telefono || restaurant.horario">
+          <div class="info-item" *ngIf="restaurant.direccion">
+            <span class="info-icon">📍</span>
+            <span>{{ restaurant.direccion }}</span>
+          </div>
+          <div class="info-item" *ngIf="restaurant.telefono">
+            <span class="info-icon">📞</span>
+            <span>{{ restaurant.telefono }}</span>
+          </div>
+          <div class="info-item" *ngIf="restaurant.horario">
+            <span class="info-icon">🕒</span>
+            <span>{{ restaurant.horario }}</span>
+          </div>
+        </div>
+
+        <div class="info-grid">
+          <div>⭐ <strong>{{ restaurant.calificacion }}</strong> <div class="muted">{{ restaurant.resenas }} reseñas</div></div>
+          <div>⏱ <strong>{{ restaurant.tiempoMin }}-{{ restaurant.tiempoMax }} min</strong><div class="muted">Tiempo</div></div>
+          <div>🚚 <strong>{{ restaurant.costoEnvio===0 ? 'Gratis' : ('$'+restaurant.costoEnvio) }}</strong><div class="muted">Envío</div></div>
+        </div>
+
+        <h3>Menú</h3>
+        <div *ngFor="let cat of getMenuCategories()">
+          <h4 class="cat">{{ cat }}</h4>
+          <div class="dishes">
+            <div *ngFor="let d of restaurant.menu[cat]" class="dish-row" [class.unavailable]="!d.disponible">
+              <div class="left">
+                <div class="dish-emoji">{{ d.imagen }}</div>
+                <div>
+                  <div class="dish-name">{{ d.nombre }}</div>
+                  <div class="muted small">{{ d.descripcion }}</div>
+                  <div *ngIf="d.alergenos && d.alergenos.length > 0" class="muted small">⚠️ Alérgenos: {{ getAlergenosText(d.alergenos) }}</div>
+                </div>
+              </div>
+              <div class="right">
+                <div class="price">${{ d.precio }}</div>
+                <button *ngIf="d.disponible" class="btn-add" (click)="openDishModal(d.id)">Agregar</button>
+                <div *ngIf="!d.disponible" class="muted">No disponible</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt">Reseñas</h3>
+        <div *ngIf="restaurant.resenasList && restaurant.resenasList.length > 0">
+          <div *ngFor="let r of restaurant.resenasList" class="review">
+            <div><strong>{{ r.usuario }}</strong> <span class="muted small">{{ r.fecha }}</span></div>
+            <div class="muted small">⭐ {{ r.calificacion }}</div>
+            <p>{{ r.comentario }}</p>
+          </div>
+        </div>
+        <div *ngIf="!restaurant.resenasList || restaurant.resenasList.length === 0" class="muted">
+          No hay reseñas disponibles
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
