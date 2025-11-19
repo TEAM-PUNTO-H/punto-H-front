@@ -1,0 +1,18 @@
+<div class="profile-wrapper">
+  <div class="container">
+    <!-- Header -->
+    <app-profile-header></app-profile-header>
+
+    <!-- Tabs nav -->
+    <app-profile-tabs [currentTab]="activeTab" (tabChange)="onTabChange($event)"></app-profile-tabs>
+
+    <!-- Tabs content -->
+    <section class="tab-content">
+      <app-dashboard-tab *ngIf="activeTab === 'dashboard'" (navigateToTab)="onTabChange($event)"></app-dashboard-tab>
+      <app-personal-info-tab *ngIf="activeTab === 'personal'"></app-personal-info-tab>
+      <app-orders-tab *ngIf="activeTab === 'orders'"></app-orders-tab>
+      <app-reviews-favorites-tab *ngIf="activeTab === 'reviews'"></app-reviews-favorites-tab>
+      <app-security-tab *ngIf="activeTab === 'security'"></app-security-tab>
+    </section>
+  </div>
+</div>

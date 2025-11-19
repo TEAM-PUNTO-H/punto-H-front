@@ -1,0 +1,24 @@
+:root {
+  --orange: #ff7a00;
+}
+
+.card { background:#fff; border-radius:12px; overflow:hidden; border:1px solid #e6e9ef; cursor:pointer; box-shadow:0 4px 18px rgba(16,24,40,0.04); display:flex; flex-direction:column; }
+.card-header { height:130px; display:flex; align-items:center; justify-content:center; position:relative; }
+.emoji { font-size:48px; }
+.badges { position:absolute; top:10px; left:12px; display:flex; gap:8px; }
+.badge { padding:6px 10px; border-radius:999px; font-weight:700; color:#fff; font-size:12px; }
+.badge.new { background:#0288d1; }
+.badge.promo { background:#ef4444; }
+
+.card-body { padding:14px; display:flex; flex-direction:column; gap:8px; }
+.top { display:flex; justify-content:space-between; align-items:center; }
+.title { margin:0; font-size:16px; font-weight:700; color:#0f172a; }
+.status { padding:6px 8px; border-radius:999px; font-weight:700; font-size:12px; background:#fee2e2; color:#991b1b; }
+.status.open { background:#ecfdf5; color:#065f46; }
+
+.types { margin:0; color: #475569; font-size:13px; }
+
+.meta { display:flex; gap:12px; color:#6b7280; font-size:13px; }
+.actions { margin-top:6px; display:flex; justify-content:flex-end; }
+.btn { background:var(--orange); color:#fff; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; }
+.btn:hover { background:#e26a00; }

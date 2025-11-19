@@ -1,0 +1,88 @@
+<div class="modal-overlay" *ngIf="isOpen" (click)="close()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <!-- Header del modal -->
+    <div class="modal-header">
+      <h3 *ngIf="order">{{ order.title }}</h3>
+      <button class="close-btn" (click)="close()" aria-label="Cerrar">×</button>
+    </div>
+
+    <!-- Contenido del modal -->
+    <div class="modal-body" *ngIf="order">
+      <!-- Información básica -->
+      <div class="info-section">
+        <div class="info-row">
+          <span class="info-label">Restaurante:</span>
+          <span class="info-value">{{ order.restaurant }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Fecha:</span>
+          <span class="info-value">{{ order.date }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Estado:</span>
+          <span class="badge" [class.yellow]="order.status === 'preparing'" 
+                [class.green]="order.status === 'delivered'"
+                [class.red]="order.status === 'canceled'">
+            {{ getStatusText(order.status) }}
+          </span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Productos -->
+      <div class="products-section">
+        <h4 class="section-title">Productos:</h4>
+        <div class="products-list">
+          <div *ngFor="let item of order.items" class="product-item">
+            <div class="product-info">
+              <span class="product-name">• {{ item.name }} ({{ item.quantity }})</span>
+            </div>
+            <span class="product-price">${{ item.price }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Totales -->
+      <div class="totals-section">
+        <div class="total-row">
+          <span class="total-label">Subtotal:</span>
+          <span class="total-value">${{ order.subtotal }}</span>
+        </div>
+        <div class="total-row">
+          <span class="total-label">Envío:</span>
+          <span class="total-value">${{ order.shipping }}</span>
+        </div>
+        <div class="total-row">
+          <span class="total-label">Impuestos:</span>
+          <span class="total-value">${{ order.taxes }}</span>
+        </div>
+        <div class="total-row final">
+          <span class="total-label">Total:</span>
+          <span class="total-value">${{ order.total }}</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Dirección de entrega -->
+      <div class="address-section">
+        <h4 class="section-title">Dirección de entrega:</h4>
+        <p class="address-text">{{ order.deliveryAddress }}</p>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Método de pago -->
+      <div class="payment-section">
+        <div class="info-row">
+          <span class="info-label">Método de pago:</span>
+          <span class="info-value">{{ order.paymentMethod }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

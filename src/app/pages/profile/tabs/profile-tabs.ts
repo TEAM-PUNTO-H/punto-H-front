@@ -1,0 +1,50 @@
+import { Component, EventEmitter, Output, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: 'app-profile-tabs',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './profile-tabs.html',
+  styleUrls: ['./profile-tabs.css']
+})
+export class ProfileTabsComponent implements OnChanges {
+  @Output() tabChange = new EventEmitter<string>();
+  @Input() currentTab: string = 'dashboard';
+  active = 'dashboard';
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['currentTab']) {
+      // Sincronizar el estado activo basado en el tab actual del padre
+      this.updateActiveFromCurrentTab();
+    }
+  }
+
+  private updateActiveFromCurrentTab() {
+    switch (this.currentTab) {
+      case 'dashboard':
+        this.active = 'dashboard';
+        break;
+      case 'personal':
+        this.active = 'info-personal';
+        break;
+      case 'orders':
+        this.active = 'historial-pedidos';
+        break;
+      case 'reviews':
+        this.active = 'resenas-favoritos';
+        break;
+      case 'security':
+        this.active = 'seguridad';
+        break;
+      default:
+        this.active = 'dashboard';
+    }
+  }
+
+  setTab(key: string) {
+    this.active = key;
+    this.tabChange.emit(key);
+  }
+}
+

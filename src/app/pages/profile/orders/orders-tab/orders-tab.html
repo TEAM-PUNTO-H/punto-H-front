@@ -1,0 +1,53 @@
+<div class="orders-wrap">
+  <div class="filter-row">
+    <select><option>Todos los estados</option><option>Entregados</option><option>En preparación</option><option>Cancelados</option></select>
+    <select><option>Último mes</option><option>Últimos 3 meses</option><option>Último año</option><option>Todo el tiempo</option></select>
+  </div>
+
+  <div class="orders-list">
+    <div *ngFor="let o of orders" class="card order-card">
+      <div class="order-top">
+        <div>
+          <h4>{{ o.title }}</h4>
+          <ul class="items-list">
+            <li *ngFor="let item of o.items" class="muted">{{ item }}</li>
+          </ul>
+          <p class="small muted">{{ o.date }}</p>
+        </div>
+        <div class="order-right">
+          <span class="badge" 
+                [class.yellow]="o.status==='preparing'" 
+                [class.green]="o.status==='delivered'"
+                [class.red]="o.status==='canceled'">
+            {{ o.status==='preparing' ? 'En preparación' : (o.status==='delivered' ? 'Entregado' : 'Cancelado') }}
+          </span>
+          <p class="price">${{ o.total }}</p>
+        </div>
+      </div>
+
+      <div class="order-footer">
+        <button class="btn-orange" (click)="viewDetail(o.id)">Ver Detalle</button>
+        
+        <!-- Botones según el estado del pedido -->
+        <button *ngIf="o.status === 'preparing'" class="btn-cancel" (click)="cancelOrder(o.id)">
+          Cancelar
+        </button>
+        
+        <button *ngIf="o.status === 'delivered'" class="btn-review" (click)="writeReview(o.id)">
+          Escribir Reseña
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de detalles del pedido -->
+<app-order-modal
+  [order]="selectedOrder"
+  [isOpen]="isModalOpen"
+  (closeModal)="closeModal()"
+  (cancelOrder)="cancelOrder($event)"
+  (reorder)="reorder($event)"
+  (viewInvoice)="viewInvoice($event)">
+</app-order-modal>
+

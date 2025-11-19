@@ -1,0 +1,42 @@
+<div class="modal-backdrop" (click)="closeModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <button class="close-btn" (click)="closeModal()">✕</button>
+
+    <div *ngIf="dish && restaurant" class="content">
+      <div class="hero-dish">{{ dish.imagen }}</div>
+
+      <h2>{{ dish.nombre }}</h2>
+      <div class="muted">De: {{ restaurant.nombre }}</div>
+      <p class="desc">{{ dish.descripcion }}</p>
+
+      <h4>Ingredientes</h4>
+      <div class="chips">
+        <span *ngFor="let ing of dish.ingredientes" class="chip">{{ ing }}</span>
+      </div>
+
+      <div class="options">
+        <label>Nivel de picante</label>
+        <div class="picantes">
+          <button (click)="picante='no'" [class.active]="picante==='no'">Sin</button>
+          <button (click)="picante='poco'" [class.active]="picante==='poco'">Poco</button>
+          <button (click)="picante='medio'" [class.active]="picante==='medio'">Medio</button>
+          <button (click)="picante='mucho'" [class.active]="picante==='mucho'">Mucho</button>
+        </div>
+      </div>
+
+      <div class="quantity">
+        <button class="qty-btn" (click)="aumentar(-1)">-</button>
+        <span class="qty-value">{{ cantidad }}</span>
+        <button class="qty-btn" (click)="aumentar(1)">+</button>
+      </div>
+
+      <label>Instrucciones (opcional)</label>
+      <textarea [(ngModel)]="instrucciones"></textarea>
+
+      <div class="bottom">
+        <button class="btn-add-cart" (click)="addToCart()">Agregar al Carrito - ${{ getTotalPrice() }}</button>
+      </div>
+    </div>
+
+  </div>
+</div>

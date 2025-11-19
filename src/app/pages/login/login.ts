@@ -35,7 +35,7 @@ export class Login implements OnInit {
     }
 
     console.log('Datos enviados:', this.loginForm.value);
-    this.router.navigate(['/home']);
+    this.router.navigate(['/profile']);
   }
 
   get email() {

@@ -1,0 +1,77 @@
+<div class="reviews-favs">
+  <div class="reviews-col">
+    <div class="header-row">
+      <h3>Mis Reseñas</h3><span class="muted">{{ reviews.length }} reseña{{ reviews.length !== 1 ? 's' : '' }}</span>
+    </div>
+
+    <div class="list">
+      <div *ngFor="let r of reviews" class="card">
+        <div class="card-head">
+          <h4 *ngIf="!isEditing(r.id)">{{ r.title }}</h4>
+          <input 
+            *ngIf="isEditing(r.id)" 
+            type="text" 
+            [(ngModel)]="editedReview.title" 
+            class="edit-input"
+            placeholder="Título de la reseña"
+          />
+          <div class="actions">
+            <ng-container *ngIf="!isEditing(r.id)">
+              <button class="link" (click)="startEditing(r)">Editar</button>
+              <button class="link danger" (click)="deleteReview(r.id)">Eliminar</button>
+            </ng-container>
+            <ng-container *ngIf="isEditing(r.id)">
+              <button class="link" (click)="saveReview(r.id)">Guardar</button>
+              <button class="link danger" (click)="cancelEditing()">Cancelar</button>
+            </ng-container>
+          </div>
+        </div>
+        <p class="muted small" *ngIf="!isEditing(r.id)">
+          <span class="stars">{{ getStars(r.rating) }}</span> {{ r.date }}
+        </p>
+        <div *ngIf="isEditing(r.id)" class="edit-rating">
+          <label class="rating-label">Calificación:</label>
+          <select [(ngModel)]="editedReview.rating" class="rating-select">
+            <option [value]="1">⭐ (1 estrella)</option>
+            <option [value]="2">⭐⭐ (2 estrellas)</option>
+            <option [value]="3">⭐⭐⭐ (3 estrellas)</option>
+            <option [value]="4">⭐⭐⭐⭐ (4 estrellas)</option>
+            <option [value]="5">⭐⭐⭐⭐⭐ (5 estrellas)</option>
+          </select>
+        </div>
+        <p *ngIf="!isEditing(r.id)">{{ r.text }}</p>
+        <textarea 
+          *ngIf="isEditing(r.id)" 
+          [(ngModel)]="editedReview.text" 
+          class="edit-textarea"
+          placeholder="Escribe tu reseña aquí..."
+          rows="4"
+        ></textarea>
+      </div>
+    </div>
+  </div>
+
+  <aside class="favs-col">
+    <div class="header-row">
+      <h3>Mis Favoritos</h3><span class="muted">5 restaurantes</span>
+    </div>
+
+    <div class="list">
+      <div *ngFor="let f of favorites" class="card fav">
+        <div class="fav-inner">
+          <div class="fav-icon">🌮</div>
+          <div>
+            <h4>{{ f.name }}</h4>
+            <p class="muted small">
+              <span class="stars">{{ getStars(f.rating) }}</span> {{ f.rating }} (xx reseñas)
+            </p>
+          </div>
+        </div>
+        <div class="fav-actions">
+          <button class="btn-orange-small">Ver Menú</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
+

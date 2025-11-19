@@ -1,0 +1,31 @@
+<div class="security-wrap">
+  <h3>Seguridad</h3>
+
+  <form [formGroup]="pwdForm" (ngSubmit)="changePassword()" class="card form-card">
+    <label>Contraseña actual
+      <input formControlName="currentPassword" type="password">
+    </label>
+
+    <label>Nueva contraseña
+      <input formControlName="newPassword" type="password">
+    </label>
+
+    <label>Confirmar nueva contraseña
+      <input formControlName="confirmNewPassword" type="password">
+    </label>
+
+    <button class="btn-orange" type="submit">Cambiar Contraseña</button>
+  </form>
+
+  <div class="card sessions">
+    <h4>Sesiones Activas</h4>
+    <div class="session-row">
+      <div>
+        <p class="muted">Navegador actual</p>
+        <p class="small muted">Chrome en Windows • Ciudad de México</p>
+      </div>
+      <div class="status">Activa</div>
+    </div>
+  </div>
+</div>
+

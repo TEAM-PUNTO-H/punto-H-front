@@ -1,0 +1,27 @@
+<div class="card" (click)="open()">
+  <div class="card-header" [style.background]="headerColor()">
+    <div class="emoji">{{ restaurant.emoji || '🍽️' }}</div>
+    <div class="badges">
+      <span *ngIf="restaurant.nuevo" class="badge new">NUEVO</span>
+      <span *ngIf="restaurant.promocion" class="badge promo">🎁 PROMO</span>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <div class="top">
+      <h4 class="title">{{ restaurant.nombre }}</h4>
+      <span class="status" [class.open]="restaurant.abierto">{{ restaurant.abierto ? 'Abierto' : 'Cerrado' }}</span>
+    </div>
+    <p class="types">{{ getFormattedTypes() }}</p>
+
+    <div class="meta">
+      <div class="rating">⭐ {{ restaurant.calificacion }}</div>
+      <div class="time">⏱ {{ restaurant.tiempoMin }}-{{ restaurant.tiempoMax }} min</div>
+      <div class="delivery">🚚 {{ restaurant.costoEnvio === 0 ? 'Gratis' : '$' + restaurant.costoEnvio }}</div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" (click)="$event.stopPropagation(); addSampleDish()">Agregar</button>
+    </div>
+  </div>
+</div>
