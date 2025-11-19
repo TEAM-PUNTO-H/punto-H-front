@@ -4,41 +4,47 @@
     <select><option>Último mes</option><option>Últimos 3 meses</option><option>Último año</option><option>Todo el tiempo</option></select>
   </div>
 
-  <div class="orders-list">
-    <div *ngFor="let o of orders" class="card order-card">
-      <div class="order-top">
-        <div>
-          <h4>{{ o.title }}</h4>
-          <ul class="items-list">
-            <li *ngFor="let item of o.items" class="muted">{{ item }}</li>
-          </ul>
-          <p class="small muted">{{ o.date }}</p>
+  <div class="orders-list" *ngIf="orders$ | async as orders">
+    <ng-container *ngIf="orders.length; else emptyOrders">
+      <div *ngFor="let o of orders" class="card order-card">
+        <div class="order-top">
+          <div>
+            <h4>{{ o.title }}</h4>
+            <ul class="items-list">
+              <li *ngFor="let item of o.items" class="muted">{{ item }}</li>
+            </ul>
+            <p class="small muted">{{ o.date }}</p>
+          </div>
+          <div class="order-right">
+            <span class="badge" 
+                  [class.yellow]="o.status==='preparing'" 
+                  [class.green]="o.status==='delivered'"
+                  [class.red]="o.status==='canceled'">
+              {{ o.status==='preparing' ? 'En preparación' : (o.status==='delivered' ? 'Entregado' : 'Cancelado') }}
+            </span>
+            <p class="price">${{ o.total }}</p>
+          </div>
         </div>
-        <div class="order-right">
-          <span class="badge" 
-                [class.yellow]="o.status==='preparing'" 
-                [class.green]="o.status==='delivered'"
-                [class.red]="o.status==='canceled'">
-            {{ o.status==='preparing' ? 'En preparación' : (o.status==='delivered' ? 'Entregado' : 'Cancelado') }}
-          </span>
-          <p class="price">${{ o.total }}</p>
-        </div>
-      </div>
 
-      <div class="order-footer">
-        <button class="btn-orange" (click)="viewDetail(o.id)">Ver Detalle</button>
-        
-        <!-- Botones según el estado del pedido -->
-        <button *ngIf="o.status === 'preparing'" class="btn-cancel" (click)="cancelOrder(o.id)">
-          Cancelar
-        </button>
-        
-        <button *ngIf="o.status === 'delivered'" class="btn-review" (click)="writeReview(o.id)">
-          Escribir Reseña
-        </button>
+        <div class="order-footer">
+          <button class="btn-orange" (click)="viewDetail(o.id)">Ver Detalle</button>
+          
+          <!-- Botones según el estado del pedido -->
+          <button *ngIf="o.status === 'preparing'" class="btn-cancel" (click)="cancelOrder(o.id)">
+            Cancelar
+          </button>
+          
+          <button *ngIf="o.status === 'delivered'" class="btn-review" (click)="writeReview(o.id)">
+            Escribir Reseña
+          </button>
+        </div>
       </div>
-    </div>
+    </ng-container>
   </div>
+
+  <ng-template #emptyOrders>
+    <p class="muted">Aún no tienes pedidos registrados.</p>
+  </ng-template>
 </div>
 
 <!-- Modal de detalles del pedido -->

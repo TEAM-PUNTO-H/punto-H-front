@@ -38,53 +38,57 @@
 
     <h3>Pedidos Recientes</h3>
 
-    <div class="space-col">
-      <div class="card order">
-        <div class="order-inner">
-          <div>
-            <h4>Pedido #001</h4>
-            <p class="muted">Tacos al Pastor, Bowl de Quinoa</p>
-            <p class="muted small">15 Nov 2024, 2:30 PM</p>
-          </div>
-          <div class="order-right">
-            <span class="badge yellow">En preparación</span>
-            <p class="price">$110</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="card order">
-        <div class="order-inner">
-          <div>
-            <h4>Pedido #002</h4>
-            <p class="muted">Burger Clásica, Café Americano</p>
-            <p class="muted small">14 Nov 2024, 1:15 PM</p>
-          </div>
-          <div class="order-right">
-            <span class="badge green">Entregado</span>
-            <p class="price">$100</p>
+    <div class="space-col" *ngIf="recentOrders$ | async as recentOrders">
+      <ng-container *ngIf="recentOrders.length; else emptyRecentOrders">
+        <div *ngFor="let order of recentOrders" class="card order">
+          <div class="order-inner">
+            <div>
+              <h4>{{ order.title }}</h4>
+              <p class="muted">{{ order.items.join(', ') }}</p>
+              <p class="muted small">{{ order.date }}</p>
+            </div>
+            <div class="order-right">
+              <span class="badge" [ngClass]="getStatusClass(order.status)">
+                {{ getStatusText(order.status) }}
+              </span>
+              <p class="price">${{ order.total }}</p>
+            </div>
           </div>
         </div>
-      </div>
+      </ng-container>
     </div>
+
+    <ng-template #emptyRecentOrders>
+      <p class="muted">No hay pedidos recientes.</p>
+    </ng-template>
   </div>
 
   <aside class="side-col">
     <h3>Información de Cuenta</h3>
 
-    <div class="card stats">
-      <div class="stat-row"><span>Pedidos realizados</span><strong>23</strong></div>
-      <div class="stat-row"><span>Total gastado</span><strong class="green">$1,250</strong></div>
-      <div class="stat-row"><span>Reseñas escritas</span><strong>8</strong></div>
-      <div class="stat-row"><span>Favoritos</span><strong>5</strong></div>
+    <div class="card stats" *ngIf="accountStats$ | async as stats">
+      <div class="stat-row"><span>Pedidos realizados</span><strong>{{ stats.ordersCount }}</strong></div>
+      <div class="stat-row"><span>Total gastado</span><strong class="green">{{ stats.totalSpent | currency:'COP':'symbol':'1.0-0' }}</strong></div>
+      <div class="stat-row"><span>Reseñas escritas</span><strong>{{ stats.reviewsCount }}</strong></div>
+      <div class="stat-row"><span>Favoritos</span><strong>{{ stats.favoritesCount }}</strong></div>
     </div>
 
-    <div class="card activity">
+    <div class="card activity" *ngIf="activity$ | async as activity">
       <h4>Actividad Reciente</h4>
-      <div class="act-row"><span>📦</span><div><strong>Pedido realizado</strong><p class="muted small">Hace 2 horas</p></div></div>
-      <div class="act-row"><span>⭐</span><div><strong>Reseña publicada</strong><p class="muted small">Hace 1 día</p></div></div>
-      <div class="act-row"><span>❤️</span><div><strong>Restaurante favorito</strong><p class="muted small">Hace 3 días</p></div></div>
+      <ng-container *ngIf="activity.length; else emptyActivity">
+        <div class="act-row" *ngFor="let act of activity">
+          <span>{{ act.icon }}</span>
+          <div>
+            <strong>{{ act.title }}</strong>
+            <p class="muted small">{{ act.description }} • {{ act.timestamp }}</p>
+          </div>
+        </div>
+      </ng-container>
     </div>
+
+    <ng-template #emptyActivity>
+      <p class="muted small">Aún no registramos actividad reciente.</p>
+    </ng-template>
   </aside>
 </div>
 
