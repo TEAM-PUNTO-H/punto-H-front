@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 
 import { CatalogService } from './catalog.service';
 import type { Restaurant, Dish } from './restaurant.model';
@@ -14,8 +15,7 @@ import { DishDetailComponent } from './components/dish-detail/dish-detail';
   standalone: true,
   imports: [CommonModule, FormsModule, RestaurantCardComponent, RestaurantDetailComponent, DishDetailComponent],
   templateUrl: './catalog.html',
-  styleUrls: ['./catalog.css'],
-  providers: [CatalogService]
+  styleUrls: ['./catalog.css']
 })
 export class CatalogPage {
   allRestaurants: Restaurant[] = [];
@@ -46,10 +46,11 @@ export class CatalogPage {
   // filtros avanzados
   showAdvancedFilters = false;
 
-  constructor(private svc: CatalogService) {
+  constructor(private svc: CatalogService, private route: ActivatedRoute) {
     this.allRestaurants = this.svc.getRestaurants();
     this.restaurants = [...this.allRestaurants];
     this.applyAll();
+    this.listenForRestaurantParam();
   }
 
   // UI helpers
@@ -166,5 +167,17 @@ export class CatalogPage {
     this.notificationText = text;
     this.showNotificationFlag = true;
     setTimeout(()=> this.showNotificationFlag = false, 3000);
+  }
+
+  private listenForRestaurantParam() {
+    this.route.queryParamMap.subscribe(params => {
+      const targetId = params.get('restaurant');
+      if (targetId) {
+        const found = this.allRestaurants.find(r => r.id === targetId);
+        if (found) {
+          this.openRestaurant(found);
+        }
+      }
+    });
   }
 }

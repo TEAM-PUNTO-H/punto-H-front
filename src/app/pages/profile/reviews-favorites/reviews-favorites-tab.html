@@ -53,23 +53,26 @@
 
   <aside class="favs-col">
     <div class="header-row">
-      <h3>Mis Favoritos</h3><span class="muted">5 restaurantes</span>
+      <h3>Mis Favoritos</h3><span class="muted">{{ favorites.length }} restaurante{{ favorites.length !== 1 ? 's' : '' }}</span>
     </div>
 
     <div class="list">
       <div *ngFor="let f of favorites" class="card fav">
         <div class="fav-inner">
-          <div class="fav-icon">🌮</div>
+          <div class="fav-icon">{{ f.emoji }}</div>
           <div>
             <h4>{{ f.name }}</h4>
             <p class="muted small">
-              <span class="stars">{{ getStars(f.rating) }}</span> {{ f.rating }} (xx reseñas)
+              <span class="stars">{{ getStars(f.rating) }}</span> {{ f.rating }}
             </p>
           </div>
         </div>
         <div class="fav-actions">
-          <button class="btn-orange-small">Ver Menú</button>
+          <button class="btn-orange-small" (click)="viewMenu(f)">Ver Menú</button>
         </div>
+      </div>
+      <div *ngIf="favorites.length === 0" class="muted small">
+        Aún no tienes restaurantes favoritos.
       </div>
     </div>
   </aside>

@@ -9,8 +9,20 @@
 
       <div class="content">
         <div class="header">
-          <h2>{{ restaurant.nombre }}</h2>
-          <span class="status" [class.open]="restaurant.abierto">{{ restaurant.abierto ? '🟢 Abierto' : '🔴 Cerrado' }}</span>
+          <div class="header-info">
+            <h2>{{ restaurant.nombre }}</h2>
+            <span class="status" [class.open]="restaurant.abierto">{{ restaurant.abierto ? '🟢 Abierto' : '🔴 Cerrado' }}</span>
+          </div>
+          <div class="header-actions">
+            <button type="button"
+                    class="favorite-btn"
+                    [class.active]="isFavorite"
+                    (click)="toggleFavorite($event)">
+              <span class="icon">{{ isFavorite ? '❤️' : '🤍' }}</span>
+              {{ isFavorite ? 'En favoritos' : 'Agregar a favoritos' }}
+            </button>
+            <div *ngIf="favoriteMessage" class="inline-feedback">{{ favoriteMessage }}</div>
+          </div>
         </div>
 
         <p class="desc">{{ restaurant.descripcion }}</p>
@@ -57,6 +69,43 @@
             </div>
           </div>
         </div>
+
+        <form class="review-form" (ngSubmit)="submitReview()" #reviewForm="ngForm">
+          <h4>Escribe tu reseña</h4>
+          <div class="form-grid">
+            <div class="input-group name-field">
+              <label for="reviewName">Nombre</label>
+              <input id="reviewName"
+                     name="reviewName"
+                     type="text"
+                     [(ngModel)]="newReview.usuario"
+                     placeholder="Tu nombre"
+                     required />
+            </div>
+            <div class="input-group rating-field">
+              <label for="reviewRating">Calificación</label>
+              <select id="reviewRating"
+                      name="reviewRating"
+                      [(ngModel)]="newReview.calificacion">
+                <option *ngFor="let star of [5,4,3,2,1]" [ngValue]="star">{{ star }} ⭐</option>
+              </select>
+            </div>
+          </div>
+          <div class="input-group">
+            <label for="reviewComment">Comentario</label>
+            <textarea id="reviewComment"
+                      name="reviewComment"
+                      rows="3"
+                      [(ngModel)]="newReview.comentario"
+                      placeholder="Comparte tu experiencia"
+                      required></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-add wide">Enviar reseña</button>
+          </div>
+          <div *ngIf="reviewError" class="review-error">{{ reviewError }}</div>
+          <div *ngIf="reviewFeedback && !reviewError" class="review-feedback">{{ reviewFeedback }}</div>
+        </form>
 
         <h3 class="mt">Reseñas</h3>
         <div *ngIf="restaurant.resenasList && restaurant.resenasList.length > 0">
