@@ -1,0 +1,13 @@
+<div 
+  class="modal-backdrop" 
+  *ngIf="modalOpen()"
+  (click)="onBackdropClick($event)"
+>
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <button class="close-btn" (click)="closeModal()" title="Cerrar">✕</button>
+    <div class="modal-content">
+      <app-cart></app-cart>
+    </div>
+  </div>
+</div>
+

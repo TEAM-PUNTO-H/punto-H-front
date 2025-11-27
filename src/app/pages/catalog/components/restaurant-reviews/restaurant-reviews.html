@@ -1,0 +1,86 @@
+<div class="reviews-section">
+  <div class="reviews-header">
+    <h3>Reseñas</h3>
+    <span class="reviews-count" *ngIf="filteredReviews.length > 0">
+      {{ filteredReviews.length }} {{ filteredReviews.length === 1 ? 'reseña' : 'reseñas' }}
+    </span>
+  </div>
+
+  <div class="reviews-controls" *ngIf="allReviews.length > 0">
+    <div class="sort-controls">
+      <label for="sortSelect">Ordenar por:</label>
+      <select id="sortSelect" [(ngModel)]="sortOption" (ngModelChange)="onSortChange()">
+        <option value="recent">Más recientes</option>
+        <option value="useful">Más útiles</option>
+        <option value="best">Mejor calificación</option>
+        <option value="worst">Peor calificación</option>
+      </select>
+    </div>
+
+    <div class="filter-controls">
+      <label>Filtrar por calificación:</label>
+      <div class="rating-range">
+        <select [(ngModel)]="selectedMinRating" (ngModelChange)="onRatingFilterChange()">
+          <option *ngFor="let r of [1,2,3,4,5]" [value]="r">{{ r }} ⭐</option>
+        </select>
+        <span>a</span>
+        <select [(ngModel)]="selectedMaxRating" (ngModelChange)="onRatingFilterChange()">
+          <option *ngFor="let r of [1,2,3,4,5]" [value]="r">{{ r }} ⭐</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="reviews-list" *ngIf="displayedReviews.length > 0">
+    <div *ngFor="let review of displayedReviews" class="review-card">
+      <div class="review-header">
+        <div class="review-user">
+          <strong>{{ getDisplayName(review.usuario) }}</strong>
+        </div>
+        <div class="review-date">{{ review.fecha }}</div>
+      </div>
+      <div class="review-rating">
+        {{ getStarRating(review.calificacion) }}
+        <span class="rating-number">({{ review.calificacion }})</span>
+      </div>
+      <div class="review-comment">
+        {{ review.comentario }}
+      </div>
+    </div>
+  </div>
+
+  <div class="no-reviews" *ngIf="allReviews.length === 0">
+    <p class="muted">No hay reseñas disponibles para este restaurante.</p>
+  </div>
+
+  <div class="no-filtered-reviews" *ngIf="allReviews.length > 0 && filteredReviews.length === 0">
+    <p class="muted">No hay reseñas que coincidan con los filtros seleccionados.</p>
+  </div>
+
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button 
+      class="page-btn" 
+      [disabled]="currentPage === 1"
+      (click)="goToPage(currentPage - 1)">
+      ← Anterior
+    </button>
+    
+    <div class="page-numbers">
+      <button 
+        *ngFor="let page of getPages()" 
+        class="page-number"
+        [class.active]="page === currentPage"
+        (click)="goToPage(page)">
+        {{ page }}
+      </button>
+    </div>
+    
+    <button 
+      class="page-btn" 
+      [disabled]="currentPage === totalPages"
+      (click)="goToPage(currentPage + 1)">
+      Siguiente →
+    </button>
+  </div>
+</div>
+

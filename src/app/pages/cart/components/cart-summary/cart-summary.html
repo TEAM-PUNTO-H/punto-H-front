@@ -1,0 +1,35 @@
+<div class="cart-summary">
+  <h3 class="summary-title">Resumen del pedido</h3>
+  
+  <div class="summary-details">
+    <div class="summary-row">
+      <span class="label">Subtotal</span>
+      <span class="value">${{ subtotal.toFixed(2) }}</span>
+    </div>
+    
+    <div class="summary-row">
+      <span class="label">Envío</span>
+      <span class="value">{{ getShippingDisplay() }}</span>
+    </div>
+    
+    <div class="summary-row total-row">
+      <span class="label">Total</span>
+      <span class="value">${{ (subtotal + shipping).toFixed(2) }}</span>
+    </div>
+  </div>
+
+  <div class="delivery-info">
+    <span class="delivery-icon">⏱️</span>
+    <span class="delivery-text">Tiempo estimado: {{ estimatedDeliveryTime }}</span>
+  </div>
+
+  <div class="summary-actions">
+    <button class="btn-proceed" (click)="onProceed()" [disabled]="totalItems === 0">
+      Proceder al Pago
+    </button>
+    <button class="btn-clear" (click)="onClearCart()" [disabled]="totalItems === 0">
+      Vaciar Carrito
+    </button>
+  </div>
+</div>
+
