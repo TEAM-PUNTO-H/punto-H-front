@@ -1,5 +1,24 @@
 import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
 import type { Restaurant } from './restaurant.model';
+
+export interface FavoriteRestaurant {
+  id: string;
+  name: string;
+  rating: number;
+  emoji: string;
+}
+
+export interface UserReview {
+  id: string;
+  restaurantId: string;
+  restaurantName: string;
+  title: string;
+  rating: number;
+  text: string;
+  date: string;
+  usuario: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class CatalogService {
@@ -101,8 +120,95 @@ export class CatalogService {
     }
   ];
 
+  private favoritesSubject = new BehaviorSubject<FavoriteRestaurant[]>([
+    { id: 'tacos', name: 'Tacos El Estudiante', rating: 4.8, emoji: '🌮' },
+    { id: 'bowls', name: 'Bowls Saludables', rating: 4.9, emoji: '🥗' }
+  ]);
+  favorites$ = this.favoritesSubject.asObservable();
+
+  private reviewsSubject = new BehaviorSubject<UserReview[]>([
+    {
+      id: 'tacos-001',
+      restaurantId: 'tacos',
+      restaurantName: 'Tacos El Estudiante',
+      title: 'Tacos El Estudiante',
+      rating: 5,
+      text: 'Excelente sabor...',
+      date: '14 Nov 2024',
+      usuario: 'María G.'
+    },
+    {
+      id: 'bowls-001',
+      restaurantId: 'bowls',
+      restaurantName: 'Bowls Saludables',
+      title: 'Bowls Saludables',
+      rating: 5,
+      text: 'Ingredientes frescos...',
+      date: '12 Nov 2024',
+      usuario: 'Laura P.'
+    }
+  ]);
+  reviews$ = this.reviewsSubject.asObservable();
+
   getRestaurants(): Restaurant[] {
     // return copy
     return JSON.parse(JSON.stringify(this.data));
+  }
+
+  getRestaurantById(id: string): Restaurant | undefined {
+    return this.data.find(r => r.id === id);
+  }
+
+  isRestaurantFavorite(id: string): boolean {
+    return this.favoritesSubject.value.some(f => f.id === id);
+  }
+
+  setFavorite(restaurant: Restaurant, shouldFavorite: boolean): void {
+    const current = this.favoritesSubject.value;
+    const exists = current.some(f => f.id === restaurant.id);
+
+    if (shouldFavorite && !exists) {
+      const updated: FavoriteRestaurant = {
+        id: restaurant.id,
+        name: restaurant.nombre,
+        rating: restaurant.calificacion,
+        emoji: restaurant.emoji ?? '🍽️'
+      };
+      this.favoritesSubject.next([updated, ...current]);
+    }
+
+    if (!shouldFavorite && exists) {
+      this.favoritesSubject.next(current.filter(f => f.id !== restaurant.id));
+    }
+  }
+
+  addUserReview(restaurant: Restaurant, payload: { usuario: string; comentario: string; calificacion: number; fecha: string; }): void {
+    const newReview: UserReview = {
+      id: `${restaurant.id}-${Date.now()}`,
+      restaurantId: restaurant.id,
+      restaurantName: restaurant.nombre,
+      title: restaurant.nombre,
+      rating: payload.calificacion,
+      text: payload.comentario,
+      date: payload.fecha,
+      usuario: payload.usuario
+    };
+    this.reviewsSubject.next([newReview, ...this.reviewsSubject.value]);
+  }
+
+  updateUserReview(reviewId: string, changes: Partial<Pick<UserReview, 'title' | 'text' | 'rating'>>): void {
+    const updated = this.reviewsSubject.value.map(r => {
+      if (r.id !== reviewId) return r;
+      return {
+        ...r,
+        ...changes,
+        date: new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })
+      };
+    });
+    this.reviewsSubject.next(updated);
+  }
+
+  deleteUserReview(reviewId: string): void {
+    this.reviewsSubject.next(this.reviewsSubject.value.filter(r => r.id !== reviewId));
   }
 }
