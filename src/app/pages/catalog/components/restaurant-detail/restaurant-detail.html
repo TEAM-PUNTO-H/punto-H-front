@@ -107,17 +107,7 @@
           <div *ngIf="reviewFeedback && !reviewError" class="review-feedback">{{ reviewFeedback }}</div>
         </form>
 
-        <h3 class="mt">Reseñas</h3>
-        <div *ngIf="restaurant.resenasList && restaurant.resenasList.length > 0">
-          <div *ngFor="let r of restaurant.resenasList" class="review">
-            <div><strong>{{ r.usuario }}</strong> <span class="muted small">{{ r.fecha }}</span></div>
-            <div class="muted small">⭐ {{ r.calificacion }}</div>
-            <p>{{ r.comentario }}</p>
-          </div>
-        </div>
-        <div *ngIf="!restaurant.resenasList || restaurant.resenasList.length === 0" class="muted">
-          No hay reseñas disponibles
-        </div>
+        <app-restaurant-reviews [restaurant]="restaurant"></app-restaurant-reviews>
       </div>
     </div>
   </div>

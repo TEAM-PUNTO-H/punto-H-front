@@ -1,4 +1,44 @@
-<section class="placeholder-page">
-  <h1>Este es el carrito de compras</h1>
-</section>
+<div class="cart-page">
+  <div class="cart-container">
+    <div class="cart-header">
+      <h1>Mi Carrito</h1>
+      <p class="cart-subtitle" *ngIf="itemCount() > 0">
+        {{ itemCount() }} {{ itemCount() === 1 ? 'producto' : 'productos' }} en tu carrito
+      </p>
+    </div>
 
+    <div class="cart-content" *ngIf="itemCount() > 0; else emptyCart">
+      <div class="cart-items-section">
+        <div class="items-list">
+          <app-cart-item
+            *ngFor="let item of items()"
+            [item]="item"
+            (increase)="onIncreaseQty($event)"
+            (decrease)="onDecreaseQty($event)"
+            (remove)="onRemoveItem($event)"
+          ></app-cart-item>
+        </div>
+      </div>
+
+      <div class="cart-summary-section">
+        <app-cart-summary
+          [subtotal]="subtotal()"
+          [shipping]="shipping()"
+          [totalItems]="itemCount()"
+          [estimatedDeliveryTime]="estimatedDeliveryTime()"
+          (proceed)="onProceedToCheckout()"
+          (clearCart)="onClearCart()"
+        ></app-cart-summary>
+      </div>
+    </div>
+
+    <ng-template #emptyCart>
+      <div class="empty-cart">
+        <div class="empty-cart-icon">🛒</div>
+        <h2>Tu carrito está vacío</h2>
+        <p>Agrega productos del catálogo para comenzar tu pedido</p>
+        <button (click)="navigateToCatalog()" class="btn-browse">Explorar Catálogo</button>
+      </div>
+    </ng-template>
+  </div>
+</div>

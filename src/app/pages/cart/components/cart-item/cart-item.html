@@ -1,0 +1,35 @@
+<div class="cart-item">
+  <div class="item-image">
+    <span class="item-emoji">{{ item.image || '🍽️' }}</span>
+  </div>
+  
+  <div class="item-details">
+    <div class="item-header">
+      <h4 class="item-name">{{ item.name }}</h4>
+      <button class="remove-btn" (click)="onRemove()" title="Eliminar">✕</button>
+    </div>
+    
+    <p class="item-restaurant">{{ item.restaurantName }}</p>
+    
+    <div class="item-notes" *ngIf="item.notes || item.spiceLevel">
+      <span *ngIf="item.spiceLevel && item.spiceLevel !== 'no'" class="note-tag">
+        Picante: {{ item.spiceLevel }}
+      </span>
+      <span *ngIf="item.notes" class="note-tag">{{ item.notes }}</span>
+    </div>
+    
+    <div class="item-footer">
+      <div class="quantity-controls">
+        <button class="qty-btn" (click)="onDecrease()">-</button>
+        <span class="qty-value">{{ item.quantity }}</span>
+        <button class="qty-btn" (click)="onIncrease()">+</button>
+      </div>
+      
+      <div class="item-price">
+        <span class="unit-price">${{ item.price.toFixed(2) }}</span>
+        <span class="total-price">${{ getTotalPrice().toFixed(2) }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+

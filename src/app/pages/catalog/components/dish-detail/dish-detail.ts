@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import type { Dish, Restaurant } from '../../restaurant.model';
+import { CartService } from '../../../../shared/services/cart.service';
 
 @Component({
   selector: 'app-dish-detail',
@@ -20,6 +21,8 @@ export class DishDetailComponent {
   picante = 'no';
   instrucciones = '';
 
+  constructor(private cartService: CartService) {}
+
   closeModal() { this.close.emit(); }
 
   aumentar(delta: number) { this.cantidad = Math.max(1, this.cantidad + delta); }
@@ -29,7 +32,23 @@ export class DishDetailComponent {
   }
 
   addToCart() {
-    const text = `${this.cantidad}x ${this.dish?.nombre} agregado${this.instrucciones ? ' con instrucciones' : ''}${this.picante !== 'no' ? ' • Picante: '+this.picante : ''}`;
+    if (!this.dish || !this.restaurant) return;
+
+    // Add to cart service
+    this.cartService.addItem({
+      dishId: this.dish.id,
+      name: this.dish.nombre,
+      price: this.dish.precio,
+      quantity: this.cantidad,
+      restaurantId: this.restaurant.id,
+      restaurantName: this.restaurant.nombre,
+      image: this.dish.imagen,
+      notes: this.instrucciones || undefined,
+      spiceLevel: this.picante !== 'no' ? this.picante : undefined
+    });
+
+    // Show notification
+    const text = `${this.cantidad}x ${this.dish.nombre} agregado${this.instrucciones ? ' con instrucciones' : ''}${this.picante !== 'no' ? ' • Picante: '+this.picante : ''}`;
     this.add.emit(text);
     this.close.emit();
   }

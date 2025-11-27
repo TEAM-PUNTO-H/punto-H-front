@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import type { Restaurant } from '../../restaurant.model';
 import { CatalogService } from '../../catalog.service';
+import { RestaurantReviewsComponent } from '../restaurant-reviews/restaurant-reviews';
 
 @Component({
   selector: 'app-restaurant-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RestaurantReviewsComponent],
   templateUrl: './restaurant-detail.html',
   styleUrls: ['./restaurant-detail.css']
 })
