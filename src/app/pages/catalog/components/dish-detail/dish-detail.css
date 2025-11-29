@@ -76,6 +76,25 @@
   cursor:pointer;
 }
 
+.hero-dish-container {
+  width: 100%;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(90deg, #fff, rgba(0,0,0,0.03));
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.hero-dish-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .hero-dish { 
   font-size:72px; 
   text-align:center; 

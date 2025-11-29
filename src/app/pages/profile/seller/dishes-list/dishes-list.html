@@ -1,0 +1,39 @@
+<div class="dishes-list-wrap">
+  <div class="dishes-header">
+    <h2 class="main-title">Mis Platos</h2>
+    <button class="btn-add-dish" (click)="goToAddDish()">
+      ➕ Agregar nuevo plato
+    </button>
+  </div>
+
+  <div class="dishes-grid" *ngIf="platos.length > 0; else emptyState">
+    <div class="dish-card card" *ngFor="let plato of platos">
+      <div class="dish-image">
+        <img [src]="plato.imagen" [alt]="plato.nombre">
+      </div>
+      <div class="dish-content">
+        <div class="dish-header">
+          <h3>{{ plato.nombre }}</h3>
+          <span class="picante-badge" [title]="getPicanteText(plato.nivelPicante)">
+            {{ getPicanteIcon(plato.nivelPicante) }}
+          </span>
+        </div>
+        <p class="dish-description">{{ plato.descripcion }}</p>
+        <div class="dish-footer">
+          <span class="dish-price">${{ plato.precio | number }}</span>
+          <div class="dish-actions">
+            <button class="btn-edit" (click)="onEdit(plato.id)">Editar</button>
+            <button class="btn-delete" (click)="onDelete(plato.id)">Eliminar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #emptyState>
+    <div class="empty-state">
+      <p class="empty-message">No tienes platos registrados aún. ¡Agrega tu primer plato!</p>
+    </div>
+  </ng-template>
+</div>
+

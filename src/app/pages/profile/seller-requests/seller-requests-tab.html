@@ -1,0 +1,50 @@
+<div class="seller-requests-wrap">
+  <div class="header-section">
+    <h2 class="main-title">Solicitudes de Vendedor Pendientes</h2>
+    <p class="info-text">
+      Como administrador puedes aprobar o rechazar las solicitudes de usuarios que desean convertirse en vendedores.
+    </p>
+  </div>
+
+  <div class="requests-container" *ngIf="solicitudesPendientes.length > 0; else emptyState">
+    <div class="requests-table">
+      <div class="table-header">
+        <div class="col-nombre">Nombre del usuario</div>
+        <div class="col-correo">Correo</div>
+        <div class="col-fecha">Fecha de solicitud</div>
+        <div class="col-estado">Estado</div>
+        <div class="col-acciones">Acciones</div>
+      </div>
+
+      <div class="table-row" *ngFor="let solicitud of solicitudesPendientes">
+        <div class="col-nombre">
+          <strong>{{ solicitud.nombre }}</strong>
+        </div>
+        <div class="col-correo">
+          <span class="muted">{{ solicitud.correo }}</span>
+        </div>
+        <div class="col-fecha">
+          <span class="muted">{{ formatearFecha(solicitud.fechaSolicitud) }}</span>
+        </div>
+        <div class="col-estado">
+          <span class="badge badge-pending">Pendiente</span>
+        </div>
+        <div class="col-acciones">
+          <button class="btn-approve" (click)="aprobarSolicitud(solicitud.id)">
+            Aprobar
+          </button>
+          <button class="btn-deny" (click)="denegarSolicitud(solicitud.id)">
+            Denegar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #emptyState>
+    <div class="empty-state">
+      <p class="empty-message">No hay solicitudes pendientes</p>
+    </div>
+  </ng-template>
+</div>
+

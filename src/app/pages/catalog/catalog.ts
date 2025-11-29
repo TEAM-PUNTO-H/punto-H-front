@@ -47,10 +47,27 @@ export class CatalogPage {
   showAdvancedFilters = false;
 
   constructor(private svc: CatalogService, private route: ActivatedRoute) {
-    this.allRestaurants = this.svc.getRestaurants();
-    this.restaurants = [...this.allRestaurants];
+    this.loadRestaurants();
     this.applyAll();
     this.listenForRestaurantParam();
+    
+    // Suscribirse a cambios en los restaurantes
+    this.svc.restaurants$.subscribe(() => {
+      this.loadRestaurants();
+      this.applyAll();
+      // Actualizar el restaurante seleccionado si está abierto
+      if (this.selectedRestaurant) {
+        const updated = this.allRestaurants.find(r => r.id === this.selectedRestaurant!.id);
+        if (updated) {
+          this.selectedRestaurant = updated;
+        }
+      }
+    });
+  }
+
+  private loadRestaurants() {
+    this.allRestaurants = this.svc.getRestaurants();
+    this.restaurants = [...this.allRestaurants];
   }
 
   // UI helpers

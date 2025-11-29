@@ -1,0 +1,49 @@
+<div class="seller-tab-wrap">
+  <!-- Vista: Crear Restaurante -->
+  <app-create-restaurant-form 
+    *ngIf="currentView === 'create-restaurant' && !hasRestaurant"
+    (restaurantCreated)="onRestaurantCreated($event)">
+  </app-create-restaurant-form>
+
+  <!-- Vista: Panel de Administración -->
+  <app-restaurant-dashboard 
+    *ngIf="currentView === 'dashboard' && hasRestaurant"
+    [restaurantId]="restaurantId"
+    (navigateTo)="navigateTo($event)">
+  </app-restaurant-dashboard>
+
+  <!-- Vista: Lista de Platos -->
+  <app-dishes-list 
+    *ngIf="currentView === 'dishes'"
+    [restaurantId]="restaurantId"
+    (navigateTo)="navigateTo($event)"
+    (editDish)="onEditDish($event)"
+    (deleteDish)="onDeleteDish($event)">
+  </app-dishes-list>
+
+  <!-- Vista: Agregar Plato -->
+  <app-dish-form 
+    *ngIf="currentView === 'add-dish'"
+    [isEditMode]="false"
+    (saveDish)="onSaveDish($event)"
+    (cancel)="onCancelDishForm()">
+  </app-dish-form>
+
+  <!-- Vista: Editar Plato -->
+  <app-dish-form 
+    *ngIf="currentView === 'edit-dish'"
+    [isEditMode]="true"
+    [dish]="getDishToEdit()"
+    (saveDish)="onSaveDish($event)"
+    (deleteDish)="onDeleteDish($event)"
+    (cancel)="onCancelDishForm()">
+  </app-dish-form>
+
+  <!-- Vista: Editar Restaurante (placeholder) -->
+  <div *ngIf="currentView === 'edit-restaurant'" class="placeholder-view">
+    <h2>Editar Restaurante</h2>
+    <p>Funcionalidad de edición de restaurante próximamente disponible.</p>
+    <button class="btn-orange" (click)="navigateTo('dashboard')">Volver al Panel</button>
+  </div>
+</div>
+

@@ -37,6 +37,12 @@ export class ProfileTabsComponent implements OnChanges {
       case 'security':
         this.active = 'seguridad';
         break;
+      case 'seller-requests':
+        this.active = 'solicitudes-vendedor';
+        break;
+      case 'seller':
+        this.active = 'mi-restaurante';
+        break;
       default:
         this.active = 'dashboard';
     }

@@ -1,6 +1,12 @@
 <div class="cart-item">
   <div class="item-image">
-    <span class="item-emoji">{{ item.image || '🍽️' }}</span>
+    <img 
+      *ngIf="isItemImage(item.image)" 
+      [src]="item.image" 
+      [alt]="item.name"
+      class="item-image-img"
+      (error)="onImageError($event)">
+    <span *ngIf="!isItemImage(item.image)" class="item-emoji">{{ item.image || '🍽️' }}</span>
   </div>
   
   <div class="item-details">

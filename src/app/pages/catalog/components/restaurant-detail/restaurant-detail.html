@@ -54,7 +54,15 @@
           <div class="dishes">
             <div *ngFor="let d of restaurant.menu[cat]" class="dish-row" [class.unavailable]="!d.disponible">
               <div class="left">
-                <div class="dish-emoji">{{ d.imagen }}</div>
+                <div class="dish-image-container">
+                  <img 
+                    *ngIf="isDishImage(d.imagen)" 
+                    [src]="d.imagen" 
+                    [alt]="d.nombre"
+                    class="dish-image"
+                    (error)="onDishImageError($event, d)">
+                  <div *ngIf="!isDishImage(d.imagen)" class="dish-emoji">{{ d.imagen || '🍽️' }}</div>
+                </div>
                 <div>
                   <div class="dish-name">{{ d.nombre }}</div>
                   <div class="muted small">{{ d.descripcion }}</div>

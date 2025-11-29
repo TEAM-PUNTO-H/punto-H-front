@@ -1,6 +1,14 @@
 <div class="card" (click)="open()">
   <div class="card-header" [style.background]="headerColor()">
-    <div class="emoji">{{ restaurant.emoji || '🍽️' }}</div>
+    <div class="restaurant-image-container">
+      <img 
+        *ngIf="getRestaurantImage()" 
+        [src]="getRestaurantImage()" 
+        [alt]="restaurant.nombre"
+        class="restaurant-image"
+        (error)="onImageError($event)">
+      <div *ngIf="!getRestaurantImage()" class="emoji">{{ restaurant.emoji || '🍽️' }}</div>
+    </div>
     <div class="badges">
       <span *ngIf="restaurant.nuevo" class="badge new">NUEVO</span>
       <span *ngIf="restaurant.promocion" class="badge promo">🎁 PROMO</span>
@@ -15,7 +23,31 @@
     <p class="types">{{ getFormattedTypes() }}</p>
 
     <div class="meta">
-      <div class="rating">⭐ {{ restaurant.calificacion }}</div>
+      <div class="rating-section">
+        <div class="rating-main">
+          <div class="stars">
+            <span *ngFor="let i of [1,2,3,4,5]" class="star-icon">
+              <span *ngIf="i <= getStarRating().full" class="star-full">★</span>
+              <span *ngIf="i === getStarRating().full + 1 && getStarRating().half" class="star-half">
+                <span class="star-half-left">★</span>
+                <span class="star-half-right">☆</span>
+              </span>
+              <span *ngIf="i > getStarRating().full + (getStarRating().half ? 1 : 0)" class="star-empty">☆</span>
+            </span>
+          </div>
+          <span class="rating-value">{{ getRatingAverage().toFixed(1) }}/5</span>
+          <span class="reviews-count">({{ getTotalReviews() }} {{ getTotalReviews() === 1 ? 'reseña' : 'reseñas' }})</span>
+        </div>
+        <div class="rating-breakdown" *ngIf="getTotalReviews() > 0">
+          <div class="breakdown-item" *ngFor="let star of [5,4,3,2,1]">
+            <span class="star-label">{{ star }}★</span>
+            <div class="breakdown-bar">
+              <div class="breakdown-fill" [style.width.%]="getRatingPercentage(star)"></div>
+            </div>
+            <span class="breakdown-percent">{{ getRatingPercentage(star) }}%</span>
+          </div>
+        </div>
+      </div>
       <div class="time">⏱ {{ restaurant.tiempoMin }}-{{ restaurant.tiempoMax }} min</div>
       <div class="delivery">🚚 {{ restaurant.costoEnvio === 0 ? 'Gratis' : '$' + restaurant.costoEnvio }}</div>
     </div>

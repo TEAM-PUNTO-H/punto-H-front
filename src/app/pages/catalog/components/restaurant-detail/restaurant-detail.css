@@ -79,7 +79,29 @@
 .dish-row { display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f8fafc; border-radius:10px; }
 .dish-row.unavailable { opacity:0.5; }
 .left { display:flex; gap:12px; align-items:center; }
-.dish-emoji { font-size:28px; width:44px; text-align:center; }
+.dish-image-container {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f1f5f9;
+}
+.dish-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.dish-emoji { 
+  font-size:28px; 
+  width:44px; 
+  text-align:center; 
+  line-height: 44px;
+}
 .price { font-weight:700; color:#ff7a00; margin-bottom:8px; font-size:16px; }
 
 .btn-add {

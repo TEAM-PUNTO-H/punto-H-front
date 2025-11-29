@@ -3,7 +3,15 @@
     <button class="close-btn" (click)="closeModal()">✕</button>
 
     <div *ngIf="dish && restaurant" class="content">
-      <div class="hero-dish">{{ dish.imagen }}</div>
+      <div class="hero-dish-container">
+        <img 
+          *ngIf="isDishImage(dish.imagen)" 
+          [src]="dish.imagen" 
+          [alt]="dish.nombre"
+          class="hero-dish-image"
+          (error)="onDishImageError($event)">
+        <div *ngIf="!isDishImage(dish.imagen)" class="hero-dish">{{ dish.imagen || '🍽️' }}</div>
+      </div>
 
       <h2>{{ dish.nombre }}</h2>
       <div class="muted">De: {{ restaurant.nombre }}</div>

@@ -1,0 +1,53 @@
+<div class="restaurant-dashboard-wrap" *ngIf="restaurante">
+  <h2 class="main-title">Panel del Restaurante</h2>
+
+  <div class="restaurant-info-card card">
+    <div class="restaurant-header">
+      <div class="restaurant-image">
+        <img [src]="restaurante.galeria?.[0] || 'https://via.placeholder.com/300x200?text=Restaurante'" [alt]="restaurante.nombre">
+      </div>
+      <div class="restaurant-details">
+        <div class="restaurant-title-row">
+          <h3>{{ restaurante.nombre }}</h3>
+          <span class="badge" [class.active]="restaurante.abierto" [class.inactive]="!restaurante.abierto">
+            {{ estadoTexto }}
+          </span>
+        </div>
+        <p class="restaurant-category">{{ tipoCocinaTexto }}</p>
+        <p class="restaurant-description">{{ restaurante.descripcion }}</p>
+        <div class="restaurant-meta">
+          <span class="meta-item">📍 {{ restaurante.direccion }}</span>
+          <span class="meta-item">⏱️ {{ tiempoEntregaTexto }} min</span>
+          <span class="meta-item">💰 Envío: ${{ restaurante.costoEnvio | number }}</span>
+        </div>
+        <button class="btn-toggle-status" (click)="toggleEstado()">
+          {{ restaurante.abierto ? 'Desactivar' : 'Activar' }} Restaurante
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-actions">
+    <h3>Accesos Rápidos</h3>
+    <div class="actions-grid">
+      <div class="action-card card" (click)="goToDishes()">
+        <div class="action-icon">🍽️</div>
+        <h4>Gestionar Platos</h4>
+        <p>Agrega, edita o elimina platos de tu menú</p>
+      </div>
+
+      <div class="action-card card" (click)="goToEditRestaurant()">
+        <div class="action-icon">✏️</div>
+        <h4>Editar Restaurante</h4>
+        <p>Modifica la información de tu restaurante</p>
+      </div>
+
+      <div class="action-card card" (click)="goToOrders()">
+        <div class="action-icon">📦</div>
+        <h4>Ver Pedidos Recibidos</h4>
+        <p>Gestiona los pedidos de tus clientes</p>
+      </div>
+    </div>
+  </div>
+</div>
+

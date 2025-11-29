@@ -60,11 +60,33 @@
       <div *ngFor="let f of favorites" class="card fav">
         <div class="fav-inner">
           <div class="fav-icon">{{ f.emoji }}</div>
-          <div>
+          <div class="fav-content">
             <h4>{{ f.name }}</h4>
-            <p class="muted small">
-              <span class="stars">{{ getStars(f.rating) }}</span> {{ f.rating }}
-            </p>
+            <div class="fav-rating-section">
+              <div class="fav-rating-main">
+                <div class="fav-stars">
+                  <span *ngFor="let i of [1,2,3,4,5]" class="star-icon">
+                    <span *ngIf="i <= getStarRating(f).full" class="star-full">★</span>
+                    <span *ngIf="i === getStarRating(f).full + 1 && getStarRating(f).half" class="star-half">
+                      <span class="star-half-left">★</span>
+                      <span class="star-half-right">☆</span>
+                    </span>
+                    <span *ngIf="i > getStarRating(f).full + (getStarRating(f).half ? 1 : 0)" class="star-empty">☆</span>
+                  </span>
+                </div>
+                <span class="fav-rating-value">{{ getRatingAverage(f).toFixed(1) }}/5</span>
+                <span class="fav-reviews-count">({{ getTotalReviews(f) }} {{ getTotalReviews(f) === 1 ? 'reseña' : 'reseñas' }})</span>
+              </div>
+              <div class="fav-rating-breakdown" *ngIf="getTotalReviews(f) > 0">
+                <div class="breakdown-item" *ngFor="let star of [5,4,3,2,1]">
+                  <span class="star-label">{{ star }}★</span>
+                  <div class="breakdown-bar">
+                    <div class="breakdown-fill" [style.width.%]="getRatingPercentage(f, star)"></div>
+                  </div>
+                  <span class="breakdown-percent">{{ getRatingPercentage(f, star) }}%</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="fav-actions">
