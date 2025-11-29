@@ -46,6 +46,22 @@ export class RestaurantDetailComponent implements OnChanges {
     return alergenos && alergenos.length > 0 ? alergenos.join(', ') : '';
   }
 
+  // Verificar si la imagen del plato es una URL válida (no un emoji)
+  isDishImage(imagen?: string): boolean {
+    if (!imagen) return false;
+    // Verificar si es una URL válida (http, blob, data) o si es un emoji
+    const isUrl = imagen.startsWith('http') || imagen.startsWith('blob:') || imagen.startsWith('data:');
+    const isEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]/u.test(imagen);
+    return isUrl && !isEmoji;
+  }
+
+  // Manejar error al cargar imagen del plato
+  onDishImageError(event: Event, dish: any): void {
+    const img = event.target as HTMLImageElement;
+    img.style.display = 'none';
+    // El emoji se mostrará automáticamente porque isDishImage() retornará false
+  }
+
   toggleFavorite(event: Event) {
     event.stopPropagation();
     if (!this.restaurant) { return; }
@@ -81,14 +97,22 @@ export class RestaurantDetailComponent implements OnChanges {
       this.restaurant.resenasList = [];
     }
 
-    this.restaurant.resenasList = [nuevaResena, ...this.restaurant.resenasList];
-    this.restaurant.resenas = (this.restaurant.resenas ?? 0) + 1;
+    // El servicio actualizará automáticamente la calificación, número de reseñas y lista
     this.catalogService.addUserReview(this.restaurant, {
       usuario,
       comentario,
       calificacion,
       fecha: nuevaResena.fecha
     });
+    
+    // Suscribirse a cambios para actualizar la vista local
+    // La calificación y lista se actualizarán automáticamente por el servicio
+    setTimeout(() => {
+      const updatedRestaurant = this.catalogService.getRestaurantById(this.restaurant!.id);
+      if (updatedRestaurant) {
+        this.restaurant = updatedRestaurant;
+      }
+    }, 100);
 
     this.newReview = { usuario: '', calificacion: 5, comentario: '' };
     this.reviewError = '';
