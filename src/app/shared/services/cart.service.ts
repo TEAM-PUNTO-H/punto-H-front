@@ -17,10 +17,9 @@ export interface CartItem {
   providedIn: 'root'
 })
 export class CartService {
-  private readonly STORAGE_KEY = 'punto-h-cart';
-  
   // Signals for cart state
-  private cartItemsSignal = signal<CartItem[]>(this.loadFromStorage());
+  // El carrito solo persiste durante la sesión actual (no en localStorage)
+  private cartItemsSignal = signal<CartItem[]>([]);
   public modalOpen = signal<boolean>(false);
 
   // Computed signals
@@ -50,25 +49,8 @@ export class CartService {
   });
 
   constructor() {
-    // Load from localStorage on init
-    this.loadFromStorage();
-  }
-
-  private loadFromStorage(): CartItem[] {
-    try {
-      const stored = localStorage.getItem(this.STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  }
-
-  private saveToStorage(items: CartItem[]): void {
-    try {
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(items));
-    } catch (error) {
-      console.error('Error saving cart to localStorage:', error);
-    }
+    // El carrito inicia vacío y solo persiste durante la sesión
+    // Cuando se conecte con backend, se cargará desde la base de datos
   }
 
   addItem(item: Omit<CartItem, 'id'>): void {
@@ -97,15 +79,14 @@ export class CartService {
       // Add new item
       this.cartItemsSignal.set([...currentItems, newItem]);
     }
-    
-    this.saveToStorage(this.cartItemsSignal());
+    // No guardar en localStorage - solo persiste durante la sesión
   }
 
   removeItem(id: string): void {
     const currentItems = this.cartItemsSignal();
     const updated = currentItems.filter(item => item.id !== id);
     this.cartItemsSignal.set(updated);
-    this.saveToStorage(updated);
+    // No guardar en localStorage - solo persiste durante la sesión
   }
 
   increaseQty(id: string): void {
@@ -114,7 +95,7 @@ export class CartService {
       item.id === id ? { ...item, quantity: item.quantity + 1 } : item
     );
     this.cartItemsSignal.set(updated);
-    this.saveToStorage(updated);
+    // No guardar en localStorage - solo persiste durante la sesión
   }
 
   decreaseQty(id: string): void {
@@ -127,12 +108,12 @@ export class CartService {
       return item;
     });
     this.cartItemsSignal.set(updated);
-    this.saveToStorage(updated);
+    // No guardar en localStorage - solo persiste durante la sesión
   }
 
   clearCart(): void {
     this.cartItemsSignal.set([]);
-    this.saveToStorage([]);
+    // No guardar en localStorage - solo persiste durante la sesión
   }
 
   getTotal(): number {

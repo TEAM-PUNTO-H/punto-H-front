@@ -14,14 +14,22 @@
 }
 
 .item-image {
-  flex-shrink: 0;
   width: 80px;
   height: 80px;
-  background: #f9fafb;
-  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f9fafb;
+}
+
+.item-image-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .item-emoji {

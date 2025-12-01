@@ -8,6 +8,8 @@ import { PersonalInfoTabComponent } from './personal-info/personal-info-tab';
 import { OrdersTabComponent } from './orders/orders-tab/orders-tab';
 import { ReviewsFavoritesTabComponent } from './reviews-favorites/reviews-favorites-tab';
 import { SecurityTabComponent } from './security/security-tab';
+import { SellerRequestsTabComponent } from './seller-requests/seller-requests-tab';
+import { SellerTabComponent } from './seller/seller-tab/seller-tab';
 
 @Component({
   selector: 'app-profile',
@@ -20,13 +22,15 @@ import { SecurityTabComponent } from './security/security-tab';
     PersonalInfoTabComponent,
     OrdersTabComponent,
     ReviewsFavoritesTabComponent,
-    SecurityTabComponent
+    SecurityTabComponent,
+    SellerRequestsTabComponent,
+    SellerTabComponent
   ],
   templateUrl: './profile.html',
   styleUrls: ['./profile.css']
 })
 export class ProfileComponent {
-  activeTab: 'dashboard' | 'personal' | 'orders' | 'reviews' | 'security' = 'dashboard';
+  activeTab: 'dashboard' | 'personal' | 'orders' | 'reviews' | 'security' | 'seller-requests' | 'seller' = 'dashboard';
 
   // recibe el cambio desde ProfileTabsComponent
   onTabChange(tab: string) {
@@ -42,6 +46,12 @@ export class ProfileComponent {
         break;
       case 'seguridad':
         this.activeTab = 'security';
+        break;
+      case 'solicitudes-vendedor':
+        this.activeTab = 'seller-requests';
+        break;
+      case 'mi-restaurante':
+        this.activeTab = 'seller';
         break;
       default:
         this.activeTab = 'dashboard';

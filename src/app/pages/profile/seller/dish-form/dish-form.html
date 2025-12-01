@@ -1,0 +1,94 @@
+<div class="dish-form-wrap">
+  <h2 class="main-title">{{ isEditMode ? 'Editar Plato' : 'Agregar Plato' }}</h2>
+
+  <form [formGroup]="dishForm" (ngSubmit)="onSubmit()" class="form-card">
+    <label>
+      Imagen del plato
+      <div class="image-upload">
+        <input 
+          type="file" 
+          accept="image/*"
+          (change)="onImageSelected($event)"
+          id="dish-image">
+        <label for="dish-image" class="upload-button">
+          <span *ngIf="!imagePreview">📷 Subir imagen</span>
+          <span *ngIf="imagePreview">Cambiar imagen</span>
+        </label>
+        <div class="image-preview" *ngIf="imagePreview">
+          <img [src]="imagePreview" alt="Vista previa">
+        </div>
+      </div>
+    </label>
+
+    <label>
+      Nombre del plato
+      <input 
+        formControlName="nombre" 
+        type="text" 
+        placeholder="Ej: Tacos al Pastor"
+        [class.error]="nombre?.invalid && nombre?.touched">
+      <small class="error-text" *ngIf="nombre?.invalid && nombre?.touched">
+        El nombre es requerido y debe tener al menos 3 caracteres
+      </small>
+    </label>
+
+    <label>
+      Descripción
+      <textarea 
+        formControlName="descripcion" 
+        rows="4"
+        placeholder="Describe el plato, ingredientes principales..."
+        [class.error]="descripcion?.invalid && descripcion?.touched"></textarea>
+      <small class="error-text" *ngIf="descripcion?.invalid && descripcion?.touched">
+        La descripción es requerida y debe tener al menos 10 caracteres
+      </small>
+    </label>
+
+    <div class="form-row">
+      <label class="half-width">
+        Precio (COP)
+        <input 
+          formControlName="precio" 
+          type="number" 
+          min="1000"
+          placeholder="15000"
+          [class.error]="precio?.invalid && precio?.touched">
+        <small class="error-text" *ngIf="precio?.invalid && precio?.touched">
+          El precio es requerido y debe ser al menos $1,000
+        </small>
+      </label>
+
+      <label class="half-width">
+        Nivel de picante
+        <select 
+          formControlName="nivelPicante"
+          [class.error]="nivelPicante?.invalid && nivelPicante?.touched">
+          <option *ngFor="let nivel of nivelesPicante" [value]="nivel.value">
+            {{ nivel.label }}
+          </option>
+        </select>
+        <small class="error-text" *ngIf="nivelPicante?.invalid && nivelPicante?.touched">
+          Debes seleccionar un nivel de picante
+        </small>
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn-cancel" (click)="onCancel()">Cancelar</button>
+      <button 
+        type="submit" 
+        class="btn-orange-large" 
+        [disabled]="dishForm.invalid">
+        {{ isEditMode ? 'Actualizar Plato' : 'Guardar Plato' }}
+      </button>
+      <button 
+        *ngIf="isEditMode" 
+        type="button" 
+        class="btn-delete-small" 
+        (click)="onDelete()">
+        Eliminar Plato
+      </button>
+    </div>
+  </form>
+</div>
+

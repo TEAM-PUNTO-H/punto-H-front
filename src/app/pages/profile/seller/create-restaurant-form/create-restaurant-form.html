@@ -1,0 +1,121 @@
+<div class="create-restaurant-wrap">
+  <div class="header-section">
+    <div class="header-icon">🍽️</div>
+    <h2 class="main-title">Crea tu restaurante en Punto H</h2>
+  </div>
+
+  <form [formGroup]="restaurantForm" (ngSubmit)="onSubmit()" class="form-card">
+    <label>
+      Nombre del restaurante
+      <input 
+        formControlName="nombre" 
+        type="text" 
+        placeholder="Ej: La Cocina de María"
+        [class.error]="nombre?.invalid && nombre?.touched">
+      <small class="error-text" *ngIf="nombre?.invalid && nombre?.touched">
+        El nombre es requerido y debe tener al menos 3 caracteres
+      </small>
+    </label>
+
+    <label>
+      Descripción
+      <textarea 
+        formControlName="descripcion" 
+        rows="4"
+        placeholder="Describe tu restaurante, especialidades, ambiente..."
+        [class.error]="descripcion?.invalid && descripcion?.touched"></textarea>
+      <small class="error-text" *ngIf="descripcion?.invalid && descripcion?.touched">
+        La descripción es requerida y debe tener al menos 10 caracteres
+      </small>
+    </label>
+
+    <label>
+      Tipo de cocina
+      <select 
+        formControlName="tipoCocina"
+        [class.error]="tipoCocina?.invalid && tipoCocina?.touched">
+        <option value="">Selecciona un tipo</option>
+        <option *ngFor="let tipo of tiposCocina" [value]="tipo">{{ tipo }}</option>
+      </select>
+      <small class="error-text" *ngIf="tipoCocina?.invalid && tipoCocina?.touched">
+        Debes seleccionar un tipo de cocina
+      </small>
+    </label>
+
+    <div class="time-range">
+      <label>
+        Tiempo mínimo de entrega (minutos)
+        <input 
+          formControlName="tiempoMin" 
+          type="number" 
+          min="10"
+          placeholder="30"
+          [class.error]="tiempoMin?.invalid && tiempoMin?.touched">
+        <small class="error-text" *ngIf="tiempoMin?.invalid && tiempoMin?.touched">
+          El tiempo mínimo debe ser al menos 10 minutos
+        </small>
+      </label>
+
+      <label>
+        Tiempo máximo de entrega (minutos)
+        <input 
+          formControlName="tiempoMax" 
+          type="number" 
+          min="10"
+          placeholder="60"
+          [class.error]="tiempoMax?.invalid && tiempoMax?.touched">
+        <small class="error-text" *ngIf="tiempoMax?.invalid && tiempoMax?.touched">
+          El tiempo máximo debe ser al menos 10 minutos
+        </small>
+      </label>
+    </div>
+
+    <label>
+      Costo de envío (COP)
+      <input 
+        formControlName="costoEnvio" 
+        type="number" 
+        min="0"
+        placeholder="5000"
+        [class.error]="costoEnvio?.invalid && costoEnvio?.touched">
+      <small class="error-text" *ngIf="costoEnvio?.invalid && costoEnvio?.touched">
+        El costo de envío es requerido
+      </small>
+    </label>
+
+    <label>
+      Dirección
+      <textarea 
+        formControlName="direccion" 
+        rows="2"
+        placeholder="Dirección completa del restaurante"
+        [class.error]="direccion?.invalid && direccion?.touched"></textarea>
+      <small class="error-text" *ngIf="direccion?.invalid && direccion?.touched">
+        La dirección es requerida y debe tener al menos 10 caracteres
+      </small>
+    </label>
+
+    <label>
+      Foto del restaurante
+      <div class="image-upload">
+        <input 
+          type="file" 
+          accept="image/*"
+          (change)="onImageSelected($event)"
+          id="restaurant-image">
+        <label for="restaurant-image" class="upload-button">
+          <span *ngIf="!imagePreview">📷 Subir imagen</span>
+          <span *ngIf="imagePreview">Cambiar imagen</span>
+        </label>
+        <div class="image-preview" *ngIf="imagePreview">
+          <img [src]="imagePreview" alt="Vista previa">
+        </div>
+      </div>
+    </label>
+
+    <button class="btn-orange-large" type="submit" [disabled]="restaurantForm.invalid">
+      Crear Restaurante
+    </button>
+  </form>
+</div>
+
