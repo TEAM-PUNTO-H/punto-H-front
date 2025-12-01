@@ -7,7 +7,7 @@
         <h2>Crear Cuenta</h2>
         <p class="subtitle">Únete a Punto H</p>
       </div>
-  
+
       <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
         <div>
           <label for="nombre">Nombre completo</label>
@@ -23,7 +23,7 @@
             <span *ngIf="nombre?.errors?.['minlength']">Mínimo 3 caracteres</span>
           </div>
         </div>
-  
+
         <div>
           <label for="email">Correo electrónico</label>
           <input
@@ -38,7 +38,7 @@
             <span *ngIf="email?.errors?.['email']">Email inválido</span>
           </div>
         </div>
-  
+
         <div>
           <label for="telefono">Teléfono</label>
           <input
@@ -53,19 +53,19 @@
             <span *ngIf="telefono?.errors?.['pattern']">Formato inválido</span>
           </div>
         </div>
-  
+
         <div>
           <label for="tipoUsuario">Tipo de usuario</label>
           <select id="tipoUsuario" formControlName="tipoUsuario" required>
             <option value="">Seleccione</option>
             <option value="Cliente">Cliente</option>
-            <option value="Restaurante">Proveedor</option>
+            <option value="Vendedor">Vendedor</option>
           </select>
           <div *ngIf="tipoUsuario?.invalid && tipoUsuario?.touched" class="error-message">
             Seleccione un tipo de usuario
           </div>
         </div>
-  
+
         <div *ngIf="tipoUsuario?.value === 'cliente'">
           <label for="direccion">Dirección</label>
           <input
@@ -79,7 +79,7 @@
             La dirección es requerida para clientes
           </div>
         </div>
-  
+
         <div>
           <label for="password">Contraseña</label>
           <input
@@ -94,7 +94,7 @@
             <span *ngIf="password?.errors?.['minlength']">Mínimo 8 caracteres</span>
           </div>
         </div>
-  
+
         <div>
           <label for="confirmPassword">Confirmar contraseña</label>
           <input
@@ -111,42 +111,42 @@
             Las contraseñas no coinciden
           </div>
         </div>
-  
+
         <div>
           <label class="checkbox-group">
-            <input type="checkbox" formControlName="aceptaTerminos" /> 
+            <input type="checkbox" formControlName="aceptaTerminos" />
             Acepto los términos y condiciones
           </label>
           <div *ngIf="aceptaTerminos?.invalid && aceptaTerminos?.touched" class="error-message">
             Debe aceptar los términos
           </div>
         </div>
-  
+
         <div>
           <label class="checkbox-group">
-            <input type="checkbox" formControlName="aceptaPrivacidad" /> 
+            <input type="checkbox" formControlName="aceptaPrivacidad" />
             Acepto la política de privacidad
           </label>
           <div *ngIf="aceptaPrivacidad?.invalid && aceptaPrivacidad?.touched" class="error-message">
             Debe aceptar la política de privacidad
           </div>
         </div>
-  
+
         <div>
           <label class="checkbox-group">
-            <input type="checkbox" formControlName="recibePromos" /> 
+            <input type="checkbox" formControlName="recibePromos" />
             Deseo recibir promociones y ofertas
           </label>
         </div>
-  
+
         <button type="submit" class="btn-orange w-full">Crear Cuenta</button>
-  
+
         <div class="text-center text-small">
           ¿Ya tienes cuenta?
           <a routerLink="/login" class="text-orange">Inicia sesión aquí</a>
         </div>
       </form>
-  
+
       <div class="text-center" style="margin-top: 1rem;">
         <a routerLink="/" class="text-small">← Volver al inicio</a>
       </div>

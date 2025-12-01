@@ -1,11 +1,13 @@
 
 services:
-  angular-app:
-    build: .
-    container_name: angular-app
+  punto-h-front:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: punto-h-front
     ports:
       - "8080:80"
-    restart: unless-stopped
+    restart: always
     networks:
       - my-microservices-net
 

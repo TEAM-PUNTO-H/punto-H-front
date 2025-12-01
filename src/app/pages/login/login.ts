@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '../../services/auth.service';
 
 
 @Component({
@@ -16,6 +17,7 @@ import { CommonModule } from '@angular/common';
 export class Login implements OnInit {
 
   loginForm!: FormGroup; // <- declaramos sin inicializar
+  private auth = inject(AuthService);
 
   constructor(private fb: FormBuilder, private router: Router) {}
 
@@ -35,7 +37,9 @@ export class Login implements OnInit {
     }
 
     console.log('Datos enviados:', this.loginForm.value);
-    this.router.navigate(['/profile']);
+    this.auth.login(this.loginForm.value.email, this.loginForm.value.password);
+
+    //this.router.navigate(['/profile']);
   }
 
   get email() {
