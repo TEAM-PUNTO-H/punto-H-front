@@ -28,9 +28,30 @@ export class AuthService {
           this.resposeMessage.set(error.error.message);
         }
       })
+  }
 
+  register(
+    fullName: string,
+    email: string,
+    password: string,
+    role: string,
+    phoneNumber: string,
+  ){
+    this.http.post('http://104.237.5.100:3000/api/users/registerUser', { fullName, email, password, role, phoneNumber },
+      {observe: 'response'}).subscribe({
+        next: (response) => {
+          console.log(response);
+          alert('Registro exitoso');
+          this.responseStatus.set(response.status);
+          this.resposeMessage.set('Registro exitoso');
 
-
-
+        },
+        error: (error) => {
+          alert('Error en el registro: ' + error.error.message);
+          console.log(error);
+          this.responseStatus.set(error.status);
+          this.resposeMessage.set(error.error.message);
+        }
+      })
   }
 }

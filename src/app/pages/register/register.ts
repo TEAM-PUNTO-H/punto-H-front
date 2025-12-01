@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup, ValidatorFn, AbstractControl } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-register',
@@ -13,7 +14,7 @@ import { CommonModule } from '@angular/common';
 
 export class Register implements OnInit {
   registerForm!: FormGroup;
-
+  private auth = inject(AuthService);
   constructor(private fb: FormBuilder, private router: Router) {}
 
   ngOnInit() {
@@ -74,7 +75,14 @@ export class Register implements OnInit {
     }
 
     console.log('Datos registrados:', this.registerForm.value);
-    this.router.navigate(['/login']); // vuelve al login después del registro
+    this.auth.register(
+      this.registerForm.value.nombre,
+      this.registerForm.value.email,
+      this.registerForm.value.password,
+      this.registerForm.value.tipoUsuario,
+      this.registerForm.value.telefono
+    );
+   // this.router.navigate(['/login']); // vuelve al login después del registro
   }
 
   get nombre() { return this.registerForm.get('nombre'); }

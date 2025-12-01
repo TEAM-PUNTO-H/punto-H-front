@@ -58,8 +58,8 @@
           <label for="tipoUsuario">Tipo de usuario</label>
           <select id="tipoUsuario" formControlName="tipoUsuario" required>
             <option value="">Seleccione</option>
-            <option value="Cliente">Cliente</option>
-            <option value="Vendedor">Vendedor</option>
+            <option value="comprador">Cliente</option>
+            <option value="vendedor">Vendedor</option>
           </select>
           <div *ngIf="tipoUsuario?.invalid && tipoUsuario?.touched" class="error-message">
             Seleccione un tipo de usuario
