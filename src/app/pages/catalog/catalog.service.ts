@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import type { Restaurant } from './restaurant.model';
+import type { Restaurant, Dish } from './restaurant.model';
 
 export interface FavoriteRestaurant {
   id: string;
@@ -22,6 +22,9 @@ export interface UserReview {
 
 @Injectable({ providedIn: 'root' })
 export class CatalogService {
+  private restaurantsSubject = new BehaviorSubject<Restaurant[]>([]);
+  restaurants$ = this.restaurantsSubject.asObservable();
+
   // MOCK: solo tres restaurantes como ejemplo
   private data: Restaurant[] = [
     // Tacos
@@ -150,14 +153,255 @@ export class CatalogService {
   ]);
   reviews$ = this.reviewsSubject.asObservable();
 
+  constructor() {
+    // Inicializar con los datos mock
+    // Los restaurantes creados por vendedores solo persisten durante la sesión
+    // Cuando se conecte con backend, se cargarán desde la base de datos
+    this.restaurantsSubject.next([...this.data]);
+    
+    // Sincronizar reseñas mock con el servicio de reseñas
+    this.data.forEach(restaurant => {
+      if (restaurant.resenasList && restaurant.resenasList.length > 0) {
+        // Agregar reseñas mock al servicio
+        restaurant.resenasList.forEach(resena => {
+          const review: UserReview = {
+            id: `${restaurant.id}-${restaurant.resenasList!.indexOf(resena)}`,
+            restaurantId: restaurant.id,
+            restaurantName: restaurant.nombre,
+            title: restaurant.nombre,
+            rating: resena.calificacion,
+            text: resena.comentario,
+            date: resena.fecha,
+            usuario: resena.usuario
+          };
+          // Solo agregar si no existe ya
+          const exists = this.reviewsSubject.value.some(r => 
+            r.restaurantId === restaurant.id && 
+            r.usuario === resena.usuario && 
+            r.text === resena.comentario
+          );
+          if (!exists) {
+            this.reviewsSubject.next([...this.reviewsSubject.value, review]);
+          }
+        });
+        
+        // Calcular calificación inicial
+        this.updateRestaurantRating(restaurant.id);
+      }
+    });
+  }
+
   getRestaurants(): Restaurant[] {
-    // return copy
-    return JSON.parse(JSON.stringify(this.data));
+    // Obtener todos los restaurantes del subject (ya incluye los mock y los creados por vendedores)
+    // Eliminar duplicados por ID para evitar restaurantes repetidos
+    const allRestaurants = this.restaurantsSubject.value;
+    const uniqueRestaurants = allRestaurants.filter((restaurant, index, self) =>
+      index === self.findIndex(r => r.id === restaurant.id)
+    );
+    return JSON.parse(JSON.stringify(uniqueRestaurants));
+  }
+
+  // Métodos para vendedores
+  addRestaurant(restaurantData: any): string {
+    const tiempoParts = restaurantData.tiempoEntrega?.split('-') || [restaurantData.tiempoMin || 30, restaurantData.tiempoMax || 60];
+    const tiempoMin = parseInt(tiempoParts[0]) || 30;
+    const tiempoMax = parseInt(tiempoParts[1]) || 60;
+    const precioPromedio = 0; // Se calculará cuando haya platos
+
+    // Mapear tipo de cocina a formato del catálogo
+    const tipoCocinaMap: { [key: string]: string[] } = {
+      'Mexicana': ['mexicana'],
+      'Sushi': ['japonesa'],
+      'Hamburguesas': ['rapida'],
+      'Cafetería': ['cafeteria'],
+      'Italiana': ['italiana'],
+      'Asiática': ['asiatica'],
+      'Vegetariana': ['vegetariana'],
+      'Pizza': ['italiana', 'rapida'],
+      'Mariscos': ['mariscos'],
+      'Comida Rápida': ['rapida']
+    };
+
+    const nuevoRestaurante: Restaurant = {
+      id: `seller-${Date.now()}`,
+      nombre: restaurantData.nombre,
+      emoji: '🍽️',
+      tipo: tipoCocinaMap[restaurantData.tipoCocina] || ['rapida'],
+      calificacion: 0,
+      resenas: 0,
+      tiempoMin: tiempoMin,
+      tiempoMax: tiempoMax,
+      costoEnvio: restaurantData.costoEnvio || 0,
+      precioPromedio: precioPromedio,
+      rangoPrecios: this.calculatePriceRange(precioPromedio),
+      abierto: true,
+      delivery: true,
+      nuevo: true,
+      promocion: false,
+      descripcion: restaurantData.descripcion || '',
+      direccion: restaurantData.direccion || '',
+      telefono: '',
+      horario: '',
+      galeria: this.processRestaurantImage(restaurantData.imagen),
+      menu: {},
+      resenasList: []
+    };
+
+    const current = this.restaurantsSubject.value;
+    const updated = [...current, nuevoRestaurante];
+    this.restaurantsSubject.next(updated);
+    // No guardar en localStorage - solo persiste durante la sesión
+    return nuevoRestaurante.id;
+  }
+
+  updateRestaurant(restaurantId: string, updates: Partial<Restaurant>): void {
+    const current = this.restaurantsSubject.value;
+    const updated = current.map(r => {
+      if (r.id === restaurantId) {
+        // Crear una copia profunda del restaurante con las actualizaciones
+        const updatedRestaurant = { ...r };
+        
+        // Si hay actualizaciones en el menú, hacer una copia profunda
+        if (updates.menu) {
+          const menuCopy: { [categoria: string]: Dish[] } = {};
+          Object.keys(updates.menu).forEach(categoria => {
+            menuCopy[categoria] = [...updates.menu![categoria]];
+          });
+          updatedRestaurant.menu = menuCopy;
+        }
+        
+        // Aplicar otras actualizaciones
+        Object.keys(updates).forEach(key => {
+          if (key !== 'menu') {
+            (updatedRestaurant as any)[key] = (updates as any)[key];
+          }
+        });
+        
+        return updatedRestaurant;
+      }
+      return r;
+    });
+    this.restaurantsSubject.next(updated);
+    // No guardar en localStorage - solo persiste durante la sesión
+  }
+
+  addDishToRestaurant(restaurantId: string, dishData: any): void {
+    const current = this.restaurantsSubject.value;
+    const restaurant = current.find(r => r.id === restaurantId);
+    
+    if (!restaurant) {
+      console.error('Restaurante no encontrado:', restaurantId);
+      return;
+    }
+
+    // Convertir nivel de picante a formato del catálogo
+    const picanteMap: { [key: string]: string } = {
+      'ninguno': '🟢',
+      'bajo': '🟡',
+      'medio': '🟠',
+      'alto': '🔴'
+    };
+
+    // Si dishData.imagen es un File, convertirlo a URL
+    let imagenUrl = dishData.imagen;
+    if (dishData.imagen instanceof File) {
+      imagenUrl = URL.createObjectURL(dishData.imagen);
+    } else if (!dishData.imagen) {
+      imagenUrl = picanteMap[dishData.nivelPicante] || '🍽️';
+    }
+
+    const nuevoPlato: Dish = {
+      id: dishData.id || `dish-${Date.now()}`,
+      nombre: dishData.nombre,
+      precio: dishData.precio,
+      descripcion: dishData.descripcion || '',
+      ingredientes: [],
+      alergenos: [],
+      disponible: true,
+      imagen: imagenUrl
+    };
+
+    // Crear una copia profunda del menú para evitar mutaciones directas
+    const menuCopy: { [categoria: string]: Dish[] } = {};
+    Object.keys(restaurant.menu).forEach(categoria => {
+      menuCopy[categoria] = [...restaurant.menu[categoria]];
+    });
+    
+    // Agregar a la categoría "Platos" o crear una nueva
+    if (!menuCopy['Platos']) {
+      menuCopy['Platos'] = [];
+    }
+    
+    // Verificar si el plato ya existe (en caso de edición)
+    const existingIndex = menuCopy['Platos'].findIndex(d => d.id === nuevoPlato.id);
+    if (existingIndex >= 0) {
+      menuCopy['Platos'][existingIndex] = nuevoPlato;
+    } else {
+      menuCopy['Platos'] = [...menuCopy['Platos'], nuevoPlato];
+    }
+
+    // Actualizar precio promedio
+    const allDishes = Object.values(menuCopy).flat();
+    const precioPromedio = allDishes.length > 0
+      ? allDishes.reduce((sum, d) => sum + d.precio, 0) / allDishes.length
+      : 0;
+
+    // Actualizar el restaurante con el nuevo menú
+    this.updateRestaurant(restaurantId, {
+      menu: menuCopy,
+      precioPromedio: precioPromedio,
+      rangoPrecios: this.calculatePriceRange(precioPromedio)
+    });
+    
+    console.log('Plato agregado/actualizado en restaurante:', restaurantId, nuevoPlato);
+  }
+
+  removeDishFromRestaurant(restaurantId: string, dishId: string): void {
+    const current = this.restaurantsSubject.value;
+    const restaurant = current.find(r => r.id === restaurantId);
+    
+    if (!restaurant) return;
+
+    // Buscar y eliminar el plato de todas las categorías
+    Object.keys(restaurant.menu).forEach(categoria => {
+      restaurant.menu[categoria] = restaurant.menu[categoria].filter(d => d.id !== dishId);
+    });
+
+    // Actualizar precio promedio
+    const allDishes = Object.values(restaurant.menu).flat();
+    const precioPromedio = allDishes.length > 0
+      ? allDishes.reduce((sum, d) => sum + d.precio, 0) / allDishes.length
+      : 0;
+
+    this.updateRestaurant(restaurantId, {
+      menu: restaurant.menu,
+      precioPromedio: precioPromedio,
+      rangoPrecios: this.calculatePriceRange(precioPromedio)
+    });
   }
 
   getRestaurantById(id: string): Restaurant | undefined {
-    return this.data.find(r => r.id === id);
+    const allRestaurants = [...this.data, ...this.restaurantsSubject.value];
+    return allRestaurants.find(r => r.id === id);
   }
+
+  private calculatePriceRange(precioPromedio: number): string {
+    if (precioPromedio < 30) return 'bajo';
+    if (precioPromedio < 60) return 'medio';
+    return 'alto';
+  }
+
+  private processRestaurantImage(imagen: any): string[] {
+    if (!imagen) return ['🍽️'];
+    if (imagen instanceof File) {
+      return [URL.createObjectURL(imagen)];
+    }
+    if (typeof imagen === 'string') {
+      return [imagen];
+    }
+    return ['🍽️'];
+  }
+
 
   isRestaurantFavorite(id: string): boolean {
     return this.favoritesSubject.value.some(f => f.id === id);
@@ -182,6 +426,18 @@ export class CatalogService {
     }
   }
 
+  // Actualizar calificación en favoritos cuando cambie
+  updateFavoriteRating(restaurantId: string, newRating: number): void {
+    const current = this.favoritesSubject.value;
+    const updated = current.map(f => {
+      if (f.id === restaurantId) {
+        return { ...f, rating: newRating };
+      }
+      return f;
+    });
+    this.favoritesSubject.next(updated);
+  }
+
   addUserReview(restaurant: Restaurant, payload: { usuario: string; comentario: string; calificacion: number; fecha: string; }): void {
     const newReview: UserReview = {
       id: `${restaurant.id}-${Date.now()}`,
@@ -194,9 +450,53 @@ export class CatalogService {
       usuario: payload.usuario
     };
     this.reviewsSubject.next([newReview, ...this.reviewsSubject.value]);
+    
+    // Actualizar calificación del restaurante
+    this.updateRestaurantRating(restaurant.id);
+  }
+
+  private updateRestaurantRating(restaurantId: string): void {
+    // Obtener todas las reseñas del restaurante desde el servicio
+    const restaurantReviews = this.reviewsSubject.value.filter(r => r.restaurantId === restaurantId);
+    
+    // Convertir UserReview a formato de resenasList
+    const resenasList = restaurantReviews.map(review => ({
+      usuario: review.usuario,
+      calificacion: review.rating,
+      comentario: review.text,
+      fecha: review.date
+    }));
+    
+    if (restaurantReviews.length === 0) {
+      // Si no hay reseñas, establecer calificación en 0
+      this.updateRestaurant(restaurantId, { 
+        calificacion: 0, 
+        resenas: 0,
+        resenasList: []
+      });
+      return;
+    }
+
+    // Calcular promedio
+    const suma = restaurantReviews.reduce((sum, review) => sum + review.rating, 0);
+    const promedio = suma / restaurantReviews.length;
+    const promedioRedondeado = Math.round(promedio * 10) / 10; // Redondear a 1 decimal
+
+    // Actualizar restaurante con calificación, número de reseñas y lista de reseñas
+    this.updateRestaurant(restaurantId, {
+      calificacion: promedioRedondeado,
+      resenas: restaurantReviews.length,
+      resenasList: resenasList
+    });
+
+    // Actualizar también la calificación en favoritos si el restaurante está en favoritos
+    this.updateFavoriteRating(restaurantId, promedioRedondeado);
   }
 
   updateUserReview(reviewId: string, changes: Partial<Pick<UserReview, 'title' | 'text' | 'rating'>>): void {
+    const review = this.reviewsSubject.value.find(r => r.id === reviewId);
+    if (!review) return;
+
     const updated = this.reviewsSubject.value.map(r => {
       if (r.id !== reviewId) return r;
       return {
@@ -206,9 +506,34 @@ export class CatalogService {
       };
     });
     this.reviewsSubject.next(updated);
+    
+    // Actualizar calificación del restaurante
+    this.updateRestaurantRating(review.restaurantId);
   }
 
   deleteUserReview(reviewId: string): void {
+    const review = this.reviewsSubject.value.find(r => r.id === reviewId);
+    if (!review) return;
+
+    const restaurantId = review.restaurantId;
     this.reviewsSubject.next(this.reviewsSubject.value.filter(r => r.id !== reviewId));
+    
+    // Actualizar calificación del restaurante
+    this.updateRestaurantRating(restaurantId);
+  }
+
+  // Método para obtener el desglose de calificaciones por estrellas
+  getRatingBreakdown(restaurantId: string): { [rating: number]: number } {
+    const reviews = this.reviewsSubject.value.filter(r => r.restaurantId === restaurantId);
+    const breakdown: { [rating: number]: number } = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    
+    reviews.forEach(review => {
+      const rating = Math.round(review.rating);
+      if (rating >= 1 && rating <= 5) {
+        breakdown[rating] = (breakdown[rating] || 0) + 1;
+      }
+    });
+    
+    return breakdown;
   }
 }
