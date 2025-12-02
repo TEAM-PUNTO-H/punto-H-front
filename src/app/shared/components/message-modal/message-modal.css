@@ -1,0 +1,223 @@
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-container {
+  position: relative;
+  background: #ffffff;
+  border-radius: 16px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
+  overflow: hidden;
+}
+
+.modal-container.modal-success {
+  border-top: 4px solid #10b981;
+}
+
+.modal-container.modal-error {
+  border-top: 4px solid #ef4444;
+}
+
+.modal-container.modal-info {
+  border-top: 4px solid #3b82f6;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 20px;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  transition: background 0.2s, color 0.2s, transform 0.1s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.close-btn:hover {
+  background: #ffffff;
+  color: #111827;
+  transform: scale(1.1);
+}
+
+.close-btn:active {
+  transform: scale(0.95);
+}
+
+.modal-content {
+  padding: 40px 32px 32px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.icon-container {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.modal-success .icon-container {
+  background: #d1fae5;
+}
+
+.modal-error .icon-container {
+  background: #fee2e2;
+}
+
+.modal-info .icon-container {
+  background: #dbeafe;
+}
+
+.modal-icon {
+  font-size: 48px;
+  line-height: 1;
+}
+
+.modal-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+.modal-success .modal-title {
+  color: #059669;
+}
+
+.modal-error .modal-title {
+  color: #dc2626;
+}
+
+.modal-info .modal-title {
+  color: #2563eb;
+}
+
+.modal-message {
+  font-size: 16px;
+  color: #6b7280;
+  line-height: 1.6;
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+.modal-button {
+  background: #ff7a00;
+  color: #ffffff;
+  border: none;
+  padding: 12px 32px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  margin-top: 8px;
+  width: 100%;
+  max-width: 200px;
+}
+
+.modal-button:hover {
+  background: #e66a00;
+  transform: translateY(-1px);
+}
+
+.modal-button:active {
+  transform: translateY(0);
+}
+
+.modal-success .modal-button {
+  background: #10b981;
+}
+
+.modal-success .modal-button:hover {
+  background: #059669;
+}
+
+.modal-error .modal-button {
+  background: #ef4444;
+}
+
+.modal-error .modal-button:hover {
+  background: #dc2626;
+}
+
+.modal-info .modal-button {
+  background: #ff7a00;
+}
+
+.modal-info .modal-button:hover {
+  background: #e66a00;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .modal-backdrop {
+    padding: 16px;
+  }
+
+  .modal-container {
+    max-width: 100%;
+  }
+
+  .modal-content {
+    padding: 32px 24px 24px;
+  }
+
+  .close-btn {
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+  }
+}

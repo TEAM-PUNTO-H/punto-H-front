@@ -58,4 +58,12 @@
       <a routerLink="/" class="text-small">← Volver al inicio</a>
     </div>
   </div>
+
+  <!-- Modal de mensajes -->
+  <app-message-modal
+    [isOpen]="modalOpen"
+    [messageType]="modalType"
+    [message]="modalMessage"
+    (close)="onModalClose()">
+  </app-message-modal>
 </div>
