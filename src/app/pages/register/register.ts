@@ -23,6 +23,7 @@ export class Register implements OnInit, OnDestroy {
   modalOpen: boolean = false;
   modalMessage: string = '';
   modalType: MessageType = 'info';
+  private registeredRole: string | null = null; // Guardar el rol del registro para redirección
 
   constructor(private fb: FormBuilder, private router: Router) {}
 
@@ -162,6 +163,10 @@ export class Register implements OnInit, OnDestroy {
     }
 
     console.log('Datos registrados:', registrationData);
+    
+    // Guardar el rol para usar en la redirección después del registro
+    this.registeredRole = registrationData.role;
+    
     this.auth.register(
       registrationData.fullName,
       registrationData.email,
@@ -186,9 +191,18 @@ export class Register implements OnInit, OnDestroy {
   onModalClose() {
     this.modalOpen = false;
     
-    // Si el registro fue exitoso, navegar al login
-    if (this.modalType === 'success') {
-      this.router.navigate(['/login']);
+    // Si el registro fue exitoso, navegar según el rol
+    if (this.modalType === 'success' && this.registeredRole) {
+      if (this.registeredRole === 'vendedor') {
+        // Vendedor: redirigir a perfil con pestaña "Mi restaurante"
+        this.router.navigate(['/profile'], { queryParams: { tab: 'seller' } });
+      } else if (this.registeredRole === 'comprador') {
+        // Cliente: redirigir a catálogo
+        this.router.navigate(['/catalog']);
+      } else {
+        // Otros roles: redirigir a perfil por defecto
+        this.router.navigate(['/profile']);
+      }
     }
   }
 

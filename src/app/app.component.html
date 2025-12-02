@@ -8,13 +8,9 @@
   <nav class="nav-links">
     <a routerLink="/home">Inicio</a>
     <a routerLink="/catalog">Catálogo</a>
-    <a routerLink="/profile">Perfil</a>
+    <a *ngIf="isLoggedIn" routerLink="/profile">Perfil</a>
   </nav>
   <div class="header-right">
-    <button class="cart-btn" (click)="openCart()">
-      🛒
-      <span class="cart-badge" *ngIf="itemCount() > 0">{{ itemCount() }}</span>
-    </button>
     <a routerLink="/login" class="login-btn">Iniciar Sesión</a>
   </div>
 </header>

@@ -1,7 +1,7 @@
 import { HttpClient } from "@angular/common/http";
-import { inject, Injectable, signal } from "@angular/core";
+import { inject, Injectable, signal, computed } from "@angular/core";
 import { Router } from "@angular/router";
-import { Observable, Subject } from "rxjs";
+import { Subject } from "rxjs";
 
 export interface LoginResponse {
   success: boolean;
@@ -30,6 +30,79 @@ export class AuthService {
   
   private registerResultSubject = new Subject<RegisterResponse>();
   registerResult$ = this.registerResultSubject.asObservable();
+
+  // Estado de sesión y rol actual
+  private userRoleSignal = signal<string | null>(null);
+  private sellerApprovedSignal = signal<boolean | null>(null);
+  private userFullNameSignal = signal<string | null>(null);
+  private userEmailSignal = signal<string | null>(null);
+  private userPhoneSignal = signal<string | null>(null);
+  private userAddressSignal = signal<string | null>(null);
+  private userMemberSinceSignal = signal<string | null>(null);
+
+  isLoggedIn = computed(() => this.userRoleSignal() !== null);
+
+  setSession(
+    role: string | null, 
+    sellerApproved: boolean | null, 
+    fullName?: string | null, 
+    email?: string | null,
+    phone?: string | null,
+    address?: string | null
+  ) {
+    this.userRoleSignal.set(role);
+    this.sellerApprovedSignal.set(sellerApproved);
+    if (fullName !== undefined) this.userFullNameSignal.set(fullName);
+    if (email !== undefined) this.userEmailSignal.set(email);
+    if (phone !== undefined) this.userPhoneSignal.set(phone);
+    if (address !== undefined) this.userAddressSignal.set(address);
+    
+    // Si es un nuevo registro, establecer la fecha actual como "Miembro desde"
+    if (fullName && !this.userMemberSinceSignal()) {
+      const now = new Date();
+      const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      const memberSince = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+      this.userMemberSinceSignal.set(memberSince);
+    }
+  }
+
+  clearSession() {
+    this.userRoleSignal.set(null);
+    this.sellerApprovedSignal.set(null);
+    this.userFullNameSignal.set(null);
+    this.userEmailSignal.set(null);
+    this.userPhoneSignal.set(null);
+    this.userAddressSignal.set(null);
+    this.userMemberSinceSignal.set(null);
+  }
+
+  userRole() {
+    return this.userRoleSignal();
+  }
+
+  isSellerApproved() {
+    return this.sellerApprovedSignal();
+  }
+
+  userFullName() {
+    return this.userFullNameSignal();
+  }
+
+  userEmail() {
+    return this.userEmailSignal();
+  }
+
+  userMemberSince() {
+    return this.userMemberSinceSignal();
+  }
+
+  userPhone() {
+    return this.userPhoneSignal();
+  }
+
+  userAddress() {
+    return this.userAddressSignal();
+  }
 
   login(email: string, password: string): void {
     this.http.post('http://104.237.5.100:3000/api/users/login', { email, password },
@@ -71,6 +144,13 @@ export class AuthService {
             };
           }
 
+          // Guardar estado de sesión en memoria
+          const userFullName = body.user?.fullName || body.fullName || '';
+          const userEmail = body.user?.email || body.email || '';
+          const userPhone = body.user?.phoneNumber || body.phoneNumber || '';
+          const userAddress = body.user?.direccion || body.direccion || '';
+          this.setSession(userRole || null, sellerApproved, userFullName || null, userEmail || null, userPhone || null, userAddress || null);
+
           this.loginResultSubject.next(loginResponse);
           this.resposeMessage.set(loginResponse.message);
         },
@@ -85,6 +165,9 @@ export class AuthService {
             message: `Error: ${errorMessage}`,
             type: 'error'
           };
+
+          // Limpiar estado de sesión en error
+          this.clearSession();
 
           this.loginResultSubject.next(loginResponse);
           this.resposeMessage.set(loginResponse.message);
@@ -105,6 +188,9 @@ export class AuthService {
     },
     direccionCliente?: string
   ): void {
+    // Modo de prueba visual: si está en true, no llama al backend y simula un registro exitoso.
+    const USE_REGISTER_MOCK = true;
+
     // Construir el objeto de registro según el tipo de usuario
     const registerPayload: any = {
       fullName,
@@ -120,7 +206,34 @@ export class AuthService {
       // registerPayload.horariosRestaurante = vendedorData.horariosRestaurante; --> Solucionar
       // registerPayload.direccionRestaurante = vendedorData.direccionRestaurante; --> Solucionar
     } else if (role === 'comprador' && direccionCliente) {
-      // registerPayload.direccion = direccionCliente;
+      registerPayload.direccion = direccionCliente;
+    }
+
+    // Si estamos en modo mock, solo simulamos respuesta exitosa y salimos
+    if (USE_REGISTER_MOCK) {
+      console.log('Simulación de registro (no se llama al backend). Payload:', registerPayload);
+
+      const registerResponse: RegisterResponse = {
+        success: true,
+        message: 'Registro exitoso (simulado para pruebas visuales)',
+        type: 'success'
+      };
+
+      // Simular un pequeño retraso como si fuera una llamada real
+      setTimeout(() => {
+        // Marcar sesión iniciada con el rol registrado para que la UI muestre las pestañas correctas
+        const isSeller = role === 'vendedor';
+        // Para vendedores, usar direccionRestaurante si existe, para compradores usar direccionCliente
+        const address = isSeller && vendedorData?.direccionRestaurante 
+          ? vendedorData.direccionRestaurante 
+          : (!isSeller ? direccionCliente || null : null);
+        this.setSession(role || null, isSeller ? true : null, fullName || null, email || null, phoneNumber || null, address);
+
+        this.registerResultSubject.next(registerResponse);
+        this.resposeMessage.set(registerResponse.message);
+      }, 400);
+
+      return;
     }
 
     this.http.post('http://104.237.5.100:3000/api/users/registerUser', registerPayload,
@@ -128,6 +241,14 @@ export class AuthService {
         next: (response: any) => {
           console.log(response);
           this.responseStatus.set(response.status);
+          
+          // Establecer sesión con el rol registrado para que la UI muestre las opciones correctas
+          const isSeller = role === 'vendedor';
+          // Para vendedores, usar direccionRestaurante si existe, para compradores usar direccionCliente
+          const address = isSeller && vendedorData?.direccionRestaurante 
+            ? vendedorData.direccionRestaurante 
+            : (!isSeller ? direccionCliente || null : null);
+          this.setSession(role || null, isSeller ? true : null, fullName || null, email || null, phoneNumber || null, address);
           
           const registerResponse: RegisterResponse = {
             success: true,

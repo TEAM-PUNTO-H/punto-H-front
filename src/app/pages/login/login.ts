@@ -18,6 +18,7 @@ export class Login implements OnInit, OnDestroy {
   loginForm!: FormGroup;
   private auth = inject(AuthService);
   private loginSubscription?: Subscription;
+  private lastLoginResponse?: LoginResponse;
 
   // Estado del modal
   modalOpen: boolean = false;
@@ -56,6 +57,7 @@ export class Login implements OnInit, OnDestroy {
   }
 
   showModal(response: LoginResponse) {
+    this.lastLoginResponse = response;
     this.modalMessage = response.message;
     this.modalType = response.type;
     this.modalOpen = true;
@@ -70,11 +72,16 @@ export class Login implements OnInit, OnDestroy {
   onModalClose() {
     this.modalOpen = false;
     
-    // Si el login fue exitoso (no error), navegar al perfil
-    if (this.modalType === 'success' || this.modalType === 'info') {
-      // Si es un vendedor no aprobado, no navegamos al perfil todavía
-      // Si es un cliente o vendedor aprobado, navegamos
-      if (this.modalType === 'success') {
+    // Si el login fue exitoso (no error), navegar según el rol
+    if (this.modalType === 'success' && this.lastLoginResponse?.success) {
+      const role = this.lastLoginResponse.user?.role;
+      const sellerApproved = this.lastLoginResponse.user?.sellerApproved;
+
+      // Vendedor aprobado -> ir directamente a la pestaña de crear restaurante
+      if (role === 'vendedor' && sellerApproved) {
+        this.router.navigate(['/profile'], { queryParams: { tab: 'seller' } });
+      } else {
+        // Otros roles -> al perfil general
         this.router.navigate(['/profile']);
       }
     }
