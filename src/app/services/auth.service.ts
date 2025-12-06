@@ -188,53 +188,21 @@ export class AuthService {
     },
     direccionCliente?: string
   ): void {
-    // Modo de prueba visual: si está en true, no llama al backend y simula un registro exitoso.
-    const USE_REGISTER_MOCK = true;
-
     // Construir el objeto de registro según el tipo de usuario
+    // El backend espera SOLO: fullName, email, password, role, phoneNumber
+    // El backend acepta roles: "admin", "vendedor", "moderador" o "comprador"
+    // NOTA: El backend NO acepta "direccion" ni otros campos adicionales en el registro inicial
     const registerPayload: any = {
       fullName,
       email,
       password,
-      role,
+      role, // Enviar el rol tal cual (comprador, vendedor, etc.)
       phoneNumber
     };
 
-    // Agregar campos según el tipo de usuario
-    if (role === 'vendedor' && vendedorData) {
-      // registerPayload.redesSociales = vendedorData.redesSociales;  --> Solucionar
-      // registerPayload.horariosRestaurante = vendedorData.horariosRestaurante; --> Solucionar
-      // registerPayload.direccionRestaurante = vendedorData.direccionRestaurante; --> Solucionar
-    } else if (role === 'comprador' && direccionCliente) {
-      registerPayload.direccion = direccionCliente;
-    }
-
-    // Si estamos en modo mock, solo simulamos respuesta exitosa y salimos
-    if (USE_REGISTER_MOCK) {
-      console.log('Simulación de registro (no se llama al backend). Payload:', registerPayload);
-
-      const registerResponse: RegisterResponse = {
-        success: true,
-        message: 'Registro exitoso (simulado para pruebas visuales)',
-        type: 'success'
-      };
-
-      // Simular un pequeño retraso como si fuera una llamada real
-      setTimeout(() => {
-        // Marcar sesión iniciada con el rol registrado para que la UI muestre las pestañas correctas
-        const isSeller = role === 'vendedor';
-        // Para vendedores, usar direccionRestaurante si existe, para compradores usar direccionCliente
-        const address = isSeller && vendedorData?.direccionRestaurante 
-          ? vendedorData.direccionRestaurante 
-          : (!isSeller ? direccionCliente || null : null);
-        this.setSession(role || null, isSeller ? true : null, fullName || null, email || null, phoneNumber || null, address);
-
-        this.registerResultSubject.next(registerResponse);
-        this.resposeMessage.set(registerResponse.message);
-      }, 400);
-
-      return;
-    }
+    // Nota: Los campos adicionales (direccion para compradores, redesSociales, horariosRestaurante, 
+    // direccionRestaurante para vendedores) NO se envían al backend en el registro inicial.
+    // Estos campos pueden ser parte de un proceso de actualización de perfil posterior.
 
     this.http.post('http://104.237.5.100:3000/api/users/registerUser', registerPayload,
       {observe: 'response'}).subscribe({
