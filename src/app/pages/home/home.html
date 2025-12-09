@@ -3,7 +3,7 @@
     <h1>Bienvenido a Punto H</h1>
     <p class="home-subtitle">Tu plataforma de comida favorita</p>
     
-    <div class="cta-section">
+    <div class="cta-section" *ngIf="!isLoggedIn()">
       <p class="cta-text">Para acceder a todas las funcionalidades, inicia sesión o crea una cuenta</p>
       <a routerLink="/login" class="btn-login-large">Iniciar Sesión</a>
       <p class="register-hint">
@@ -13,4 +13,3 @@
     </div>
   </div>
 </section>
-

@@ -40,7 +40,11 @@ export class AuthService {
   private userAddressSignal = signal<string | null>(null);
   private userMemberSinceSignal = signal<string | null>(null);
 
-  isLoggedIn = computed(() => this.userRoleSignal() !== null);
+  // Signal computed que se actualiza automáticamente cuando cambia userRoleSignal
+  isLoggedIn = computed(() => {
+    const role = this.userRoleSignal();
+    return role !== null && role !== undefined;
+  });
 
   setSession(
     role: string | null, 
@@ -76,6 +80,13 @@ export class AuthService {
     this.userMemberSinceSignal.set(null);
   }
 
+  // Método para cerrar sesión
+  logout(): void {
+    this.clearSession();
+    this.router.navigate(['/home']);
+  }
+
+
   userRole() {
     return this.userRoleSignal();
   }
@@ -108,11 +119,16 @@ export class AuthService {
     this.http.post('http://104.237.5.100:3000/api/users/login', { email, password },
       {observe: 'response'}).subscribe({
         next: (response: any) => {
-          console.log(response);
           this.responseStatus.set(response.status);
           
           const body = response.body || {};
-          const userRole = body.user?.role || body.role || '';
+          
+          // Extraer el role de la respuesta (ahora viene directamente en body.role)
+          const userRole = body.role || body.user?.role || null;
+          const validRole = (userRole && typeof userRole === 'string' && userRole.trim() !== '') 
+            ? userRole.trim() 
+            : null;
+          
           const sellerApproved = body.user?.sellerApproved !== undefined 
             ? body.user.sellerApproved 
             : (body.sellerApproved !== undefined ? body.sellerApproved : true);
@@ -120,14 +136,14 @@ export class AuthService {
           // Determinar el tipo de respuesta según el rol y estado de aprobación
           let loginResponse: LoginResponse;
           
-          if (userRole === 'vendedor' && !sellerApproved) {
+          if (validRole === 'vendedor' && !sellerApproved) {
             // Vendedor no aprobado
             loginResponse = {
               success: true,
               message: 'Tu solicitud para convertirte en vendedor está en proceso. Recibirás una notificación cuando sea aprobada.',
               type: 'info',
               user: {
-                role: userRole,
+                role: validRole || undefined,
                 sellerApproved: sellerApproved
               }
             };
@@ -138,7 +154,7 @@ export class AuthService {
               message: 'Inicio de sesión exitoso. ¡Bienvenido!',
               type: 'success',
               user: {
-                role: userRole,
+                role: validRole || undefined,
                 sellerApproved: sellerApproved
               }
             };
@@ -146,11 +162,14 @@ export class AuthService {
 
           // Guardar estado de sesión en memoria
           const userFullName = body.user?.fullName || body.fullName || '';
-          const userEmail = body.user?.email || body.email || '';
+          const userEmail = body.user?.email || body.email || email;
           const userPhone = body.user?.phoneNumber || body.phoneNumber || '';
           const userAddress = body.user?.direccion || body.direccion || '';
-          this.setSession(userRole || null, sellerApproved, userFullName || null, userEmail || null, userPhone || null, userAddress || null);
-
+          
+          // Actualizar el signal primero para que la UI se actualice inmediatamente
+          this.setSession(validRole, sellerApproved, userFullName || null, userEmail || null, userPhone || null, userAddress || null);
+          
+          // Emitir el resultado después de actualizar el signal
           this.loginResultSubject.next(loginResponse);
           this.resposeMessage.set(loginResponse.message);
         },

@@ -6,12 +6,12 @@
     <span class="logo-text">Punto H</span>
   </div>
   <nav class="nav-links">
-    <a routerLink="/home">Inicio</a>
-    <a routerLink="/catalog">Catálogo</a>
-    <a *ngIf="isLoggedIn" routerLink="/profile">Perfil</a>
+    <a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Inicio</a>
+    <a routerLink="/catalog" routerLinkActive="active">Catálogo</a>
+    <a *ngIf="isLoggedIn()" routerLink="/profile" routerLinkActive="active">Perfil</a>
   </nav>
   <div class="header-right">
-    <a routerLink="/login" class="login-btn">Iniciar Sesión</a>
+    <a *ngIf="!isLoggedIn()" routerLink="/login" class="login-btn">Iniciar Sesión</a>
   </div>
 </header>
 
