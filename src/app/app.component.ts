@@ -35,4 +35,9 @@ export class AppComponent {
   openCart(): void {
     this.cartService.openModal();
   }
+
+    logout(): void {
+    this.auth.logout();
+  }
+
 }

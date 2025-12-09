@@ -12,6 +12,7 @@
   </nav>
   <div class="header-right">
     <a *ngIf="!isLoggedIn()" routerLink="/login" class="login-btn">Iniciar Sesión</a>
+        <button *ngIf="isLoggedIn()" (click)="logout()" class="logout-btn">Cerrar Sesión</button>
   </div>
 </header>
 
