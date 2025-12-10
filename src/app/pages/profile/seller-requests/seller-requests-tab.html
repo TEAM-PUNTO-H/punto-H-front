@@ -1,12 +1,27 @@
 <div class="seller-requests-wrap">
   <div class="header-section">
-    <h2 class="main-title">Solicitudes de Vendedor Pendientes</h2>
+    <h2 class="main-title">Gestión de Vendedores</h2>
     <p class="info-text">
-      Como administrador puedes aprobar o rechazar las solicitudes de usuarios que desean convertirse en vendedores.
+      Como administrador puedes aprobar, rechazar o revertir el estado de las solicitudes de usuarios vendedores.
     </p>
   </div>
 
-  <div class="requests-container" *ngIf="solicitudesPendientes.length > 0; else emptyState">
+  <!-- Mensajes de éxito y error -->
+  <div *ngIf="successMessage" class="message-success">
+    {{ successMessage }}
+  </div>
+  <div *ngIf="error" class="message-error">
+    {{ error }}
+  </div>
+
+  <!-- Indicador de carga -->
+  <div *ngIf="loading" class="loading-indicator">
+    <p>Cargando solicitudes...</p>
+  </div>
+
+  <!-- Solicitudes Pendientes -->
+  <div class="requests-section" *ngIf="!loading && solicitudesPendientes.length > 0">
+    <h3 class="section-title">Solicitudes Pendientes</h3>
     <div class="requests-table">
       <div class="table-header">
         <div class="col-nombre">Nombre del usuario</div>
@@ -18,22 +33,22 @@
 
       <div class="table-row" *ngFor="let solicitud of solicitudesPendientes">
         <div class="col-nombre">
-          <strong>{{ solicitud.nombre }}</strong>
+          <strong>{{ solicitud.fullName }}</strong>
         </div>
         <div class="col-correo">
-          <span class="muted">{{ solicitud.correo }}</span>
+          <span class="muted">{{ solicitud.email }}</span>
         </div>
         <div class="col-fecha">
-          <span class="muted">{{ formatearFecha(solicitud.fechaSolicitud) }}</span>
+          <span class="muted">{{ formatearFecha(solicitud.createdAt) }}</span>
         </div>
         <div class="col-estado">
           <span class="badge badge-pending">Pendiente</span>
         </div>
         <div class="col-acciones">
-          <button class="btn-approve" (click)="aprobarSolicitud(solicitud.id)">
+          <button class="btn-approve" (click)="aprobarSolicitud(solicitud.id)" [disabled]="loading">
             Aprobar
           </button>
-          <button class="btn-deny" (click)="denegarSolicitud(solicitud.id)">
+          <button class="btn-deny" (click)="denegarSolicitud(solicitud.id)" [disabled]="loading">
             Denegar
           </button>
         </div>
@@ -41,10 +56,76 @@
     </div>
   </div>
 
-  <ng-template #emptyState>
-    <div class="empty-state">
-      <p class="empty-message">No hay solicitudes pendientes</p>
-    </div>
-  </ng-template>
-</div>
+  <!-- Vendedores Aprobados (para permitir denegar) -->
+  <div class="requests-section" *ngIf="!loading && solicitudesActivas.length > 0">
+    <h3 class="section-title">Vendedores Aprobados</h3>
+    <div class="requests-table">
+      <div class="table-header">
+        <div class="col-nombre">Nombre del usuario</div>
+        <div class="col-correo">Correo</div>
+        <div class="col-fecha">Fecha de solicitud</div>
+        <div class="col-estado">Estado</div>
+        <div class="col-acciones">Acciones</div>
+      </div>
 
+      <div class="table-row" *ngFor="let solicitud of solicitudesActivas">
+        <div class="col-nombre">
+          <strong>{{ solicitud.fullName }}</strong>
+        </div>
+        <div class="col-correo">
+          <span class="muted">{{ solicitud.email }}</span>
+        </div>
+        <div class="col-fecha">
+          <span class="muted">{{ formatearFecha(solicitud.createdAt) }}</span>
+        </div>
+        <div class="col-estado">
+          <span class="badge badge-approved">Activo</span>
+        </div>
+        <div class="col-acciones">
+          <button class="btn-deny" (click)="denegarSolicitud(solicitud.id)" [disabled]="loading">
+            Denegar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vendedores Denegados (para permitir aprobar) -->
+  <div class="requests-section" *ngIf="!loading && solicitudesDenegadas.length > 0">
+    <h3 class="section-title">Solicitudes Denegadas</h3>
+    <div class="requests-table">
+      <div class="table-header">
+        <div class="col-nombre">Nombre del usuario</div>
+        <div class="col-correo">Correo</div>
+        <div class="col-fecha">Fecha de solicitud</div>
+        <div class="col-estado">Estado</div>
+        <div class="col-acciones">Acciones</div>
+      </div>
+
+      <div class="table-row" *ngFor="let solicitud of solicitudesDenegadas">
+        <div class="col-nombre">
+          <strong>{{ solicitud.fullName }}</strong>
+        </div>
+        <div class="col-correo">
+          <span class="muted">{{ solicitud.email }}</span>
+        </div>
+        <div class="col-fecha">
+          <span class="muted">{{ formatearFecha(solicitud.createdAt) }}</span>
+        </div>
+        <div class="col-estado">
+          <span class="badge badge-denied">Denegado</span>
+        </div>
+        <div class="col-acciones">
+          <button class="btn-approve" (click)="aprobarSolicitud(solicitud.id)" [disabled]="loading">
+            Aprobar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estado vacío -->
+  <div class="empty-state" *ngIf="!loading && solicitudesPendientes.length === 0 && solicitudesActivas.length === 0 && solicitudesDenegadas.length === 0">
+    <p class="empty-message">No hay solicitudes de vendedores</p>
+  </div>
+</div>

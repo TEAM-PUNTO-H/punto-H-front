@@ -6,7 +6,6 @@ import { ProfileHeaderComponent } from './header/profile-header';
 import { ProfileTabsComponent } from './tabs/profile-tabs';
 import { DashboardTabComponent } from './dashboard/dashboard-tab';
 import { PersonalInfoTabComponent } from './personal-info/personal-info-tab';
-import { OrdersTabComponent } from './orders/orders-tab/orders-tab';
 import { ReviewsFavoritesTabComponent } from './reviews-favorites/reviews-favorites-tab';
 import { SecurityTabComponent } from './security/security-tab';
 import { SellerRequestsTabComponent } from './seller-requests/seller-requests-tab';
@@ -22,7 +21,6 @@ import { AuthService } from '../../services/auth.service';
     ProfileTabsComponent,
     DashboardTabComponent,
     PersonalInfoTabComponent,
-    OrdersTabComponent,
     ReviewsFavoritesTabComponent,
     SecurityTabComponent,
     SellerRequestsTabComponent,
@@ -32,7 +30,7 @@ import { AuthService } from '../../services/auth.service';
   styleUrls: ['./profile.css']
 })
 export class ProfileComponent implements OnInit {
-  activeTab: 'dashboard' | 'personal' | 'orders' | 'reviews' | 'security' | 'seller-requests' | 'seller' = 'dashboard';
+  activeTab: 'dashboard' | 'personal' | 'reviews' | 'security' | 'seller-requests' | 'seller' = 'dashboard';
 
   constructor(
     private route: ActivatedRoute,
@@ -55,6 +53,9 @@ export class ProfileComponent implements OnInit {
       const role = this.auth.userRole();
       if (role === 'vendedor') {
         this.activeTab = 'seller';
+      } else if (role === 'admin' || role === 'administrador' || role === 'moderador') {
+        // Los admins también pueden acceder a "Mi restaurante"
+        this.activeTab = 'seller';
       } else {
         this.activeTab = 'dashboard';
       }
@@ -66,9 +67,6 @@ export class ProfileComponent implements OnInit {
     switch (tab) {
       case 'info-personal':
         this.activeTab = 'personal';
-        break;
-      case 'historial-pedidos':
-        this.activeTab = 'orders';
         break;
       case 'resenas-favoritos':
         this.activeTab = 'reviews';

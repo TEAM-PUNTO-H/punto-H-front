@@ -1,10 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CreateRestaurantFormComponent } from '../create-restaurant-form/create-restaurant-form';
 import { RestaurantDashboardComponent } from '../restaurant-dashboard/restaurant-dashboard';
 import { DishesListComponent, Dish } from '../dishes-list/dishes-list';
 import { DishFormComponent, Dish as DishFormData } from '../dish-form/dish-form';
 import { CatalogService } from '../../../catalog/catalog.service';
+import { AuthService } from '../../../../services/auth.service';
+import { MessageModalComponent, MessageType } from '../../../../shared/components/message-modal/message-modal';
 
 type DishFormType = DishFormData;
 
@@ -18,12 +20,13 @@ type SellerView = 'create-restaurant' | 'dashboard' | 'dishes' | 'add-dish' | 'e
     CreateRestaurantFormComponent,
     RestaurantDashboardComponent,
     DishesListComponent,
-    DishFormComponent
+    DishFormComponent,
+    MessageModalComponent
   ],
   templateUrl: './seller-tab.html',
   styleUrls: ['./seller-tab.css']
 })
-export class SellerTabComponent {
+export class SellerTabComponent implements OnInit {
   currentView: SellerView = 'create-restaurant';
   hasRestaurant: boolean = false;
   editingDishId: string | null = null;
@@ -33,9 +36,87 @@ export class SellerTabComponent {
 
   private readonly STORAGE_KEY = 'seller_restaurant_id';
 
-  constructor(private catalogService: CatalogService) {
+  // Estado del modal
+  modalOpen: boolean = false;
+  modalMessage: string = '';
+  modalType: MessageType = 'info';
+
+  constructor(
+    private catalogService: CatalogService,
+    private authService: AuthService
+  ) {
     this.loadRestaurantState();
     this.initializeView();
+  }
+
+  ngOnInit() {
+    // Mostrar modal solo si es vendedor (no admin) y está pendiente o denegado
+    if (!this.isAdmin() && this.isSellerPending) {
+      this.showPendingModal();
+    } else if (!this.isAdmin() && this.isSellerDenied) {
+      this.showDeniedModal();
+    }
+  }
+
+  /**
+   * Verifica si el usuario actual es administrador
+   */
+  isAdmin(): boolean {
+    const role = this.authService.userRole();
+    return role === 'admin' || role === 'administrador' || role === 'moderador';
+  }
+
+  showPendingModal() {
+    this.modalMessage = 'Tu solicitud para convertirte en vendedor está en proceso. Recibirás una notificación cuando sea aprobada.';
+    this.modalType = 'info';
+    this.modalOpen = true;
+  }
+
+  showDeniedModal() {
+    this.modalMessage = 'Tu solicitud para convertirte en vendedor ha sido denegada. Si crees que esto es un error, por favor contacta con el administrador.';
+    this.modalType = 'error';
+    this.modalOpen = true;
+  }
+
+  onModalClose() {
+    this.modalOpen = false;
+  }
+
+  get isSellerApproved(): boolean {
+    const role = this.authService.userRole();
+    const state = this.authService.sellerState();
+    
+    // Los admins siempre tienen acceso completo
+    if (this.isAdmin()) {
+      return true;
+    }
+    
+    // Vendedor está aprobado si el estado es 'activo'
+    return role === 'vendedor' && state === 'activo';
+  }
+
+  get isSellerPending(): boolean {
+    // Los admins nunca están pendientes
+    if (this.isAdmin()) {
+      return false;
+    }
+    
+    const role = this.authService.userRole();
+    const state = this.authService.sellerState();
+    // Vendedor está pendiente si el estado es 'pendiente'
+    return role === 'vendedor' && state === 'pendiente';
+  }
+
+  get isSellerDenied(): boolean {
+    // Los admins nunca están denegados
+    if (this.isAdmin()) {
+      return false;
+    }
+    
+    const role = this.authService.userRole();
+    const state = this.authService.sellerState();
+    // Vendedor está denegado si el estado es 'denegado'
+    return role === 'vendedor' && state === 'denegado';
   }
 
   private loadRestaurantState() {
@@ -171,4 +252,3 @@ export class SellerTabComponent {
     } as DishFormType;
   }
 }
-

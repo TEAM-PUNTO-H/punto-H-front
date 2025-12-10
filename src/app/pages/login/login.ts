@@ -75,10 +75,9 @@ export class Login implements OnInit, OnDestroy {
     // Si el login fue exitoso (no error), navegar según el rol
     if (this.modalType === 'success' && this.lastLoginResponse?.success) {
       const role = this.lastLoginResponse.user?.role;
-      const sellerApproved = this.lastLoginResponse.user?.sellerApproved;
 
-      // Vendedor aprobado -> ir directamente a la pestaña de crear restaurante
-      if (role === 'vendedor' && sellerApproved) {
+      // Vendedor (pendiente o activo) -> ir directamente a la pestaña de Mi restaurante
+      if (role === 'vendedor') {
         this.router.navigate(['/profile'], { queryParams: { tab: 'seller' } });
       } else {
         // Otros roles -> al perfil general

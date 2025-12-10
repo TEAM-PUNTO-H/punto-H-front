@@ -185,3 +185,17 @@
   color: #047857;
   font-size: 13px;
 }
+.owner-message {
+  background: #fffbeb;
+  border: 1px solid #fbbf24;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+.owner-message p {
+  margin: 0;
+  color: #92400e;
+  font-weight: 500;
+  font-size: 0.95rem;
+}

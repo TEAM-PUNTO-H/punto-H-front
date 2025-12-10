@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import type { Restaurant } from '../../restaurant.model';
 import { CatalogService } from '../../catalog.service';
 import { RestaurantReviewsComponent } from '../restaurant-reviews/restaurant-reviews';
+import { AuthService } from '../../../../services/auth.service';
 
 @Component({
   selector: 'app-restaurant-detail',
@@ -27,7 +28,10 @@ export class RestaurantDetailComponent implements OnChanges {
   reviewError = '';
   favoriteMessage = '';
 
-  constructor(private catalogService: CatalogService) {}
+  constructor(
+    private catalogService: CatalogService,
+    private authService: AuthService
+  ) {}
 
   closeModal() { this.close.emit(); }
   openDishModal(dishId: string) { if (this.restaurant) this.openDish.emit({rest: this.restaurant, dish: dishId}); }
@@ -73,8 +77,36 @@ export class RestaurantDetailComponent implements OnChanges {
     setTimeout(() => { this.favoriteMessage = ''; }, 3000);
   }
 
+  /**
+   * Verifica si el usuario actual es el dueño del restaurante
+   */
+  isOwnerOfRestaurant(): boolean {
+    if (!this.restaurant) return false;
+    
+    const userRole = this.authService.userRole();
+    // Solo verificar si el usuario es vendedor
+    if (userRole !== 'vendedor') return false;
+    
+    // Verificar si el restaurante pertenece al vendedor actual
+    // Los restaurantes creados por vendedores tienen ID que empieza con "seller-"
+    // y se guardan en localStorage con la clave "seller_restaurant_id"
+    if (this.restaurant.id.startsWith('seller-')) {
+      const sellerRestaurantId = localStorage.getItem('seller_restaurant_id');
+      return sellerRestaurantId === this.restaurant.id;
+    }
+    
+    return false;
+  }
+
   submitReview() {
     if (!this.restaurant) { return; }
+
+    // Verificar si el usuario es dueño del restaurante
+    if (this.isOwnerOfRestaurant()) {
+      this.reviewError = 'No puedes comentar en tu propio restaurante.';
+      this.reviewFeedback = '';
+      return;
+    }
 
     const usuario = this.newReview.usuario.trim();
     const comentario = this.newReview.comentario.trim();

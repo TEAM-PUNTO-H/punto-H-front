@@ -31,9 +31,6 @@ export class ProfileTabsComponent implements OnChanges {
       case 'personal':
         this.active = 'info-personal';
         break;
-      case 'orders':
-        this.active = 'historial-pedidos';
-        break;
       case 'reviews':
         this.active = 'resenas-favoritos';
         break;
@@ -77,4 +74,3 @@ export class ProfileTabsComponent implements OnChanges {
     return role === 'vendedor' || this.showSellerRequestsTab;
   }
 }
-

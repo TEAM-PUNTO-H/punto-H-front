@@ -34,6 +34,7 @@ export class AuthService {
   // Estado de sesión y rol actual
   private userRoleSignal = signal<string | null>(null);
   private sellerApprovedSignal = signal<boolean | null>(null);
+  private sellerStateSignal = signal<string | null>(null); // 'pendiente' | 'activo' | null
   private userFullNameSignal = signal<string | null>(null);
   private userEmailSignal = signal<string | null>(null);
   private userPhoneSignal = signal<string | null>(null);
@@ -52,10 +53,12 @@ export class AuthService {
     fullName?: string | null, 
     email?: string | null,
     phone?: string | null,
-    address?: string | null
+    address?: string | null,
+    sellerState?: string | null
   ) {
     this.userRoleSignal.set(role);
     this.sellerApprovedSignal.set(sellerApproved);
+    if (sellerState !== undefined) this.sellerStateSignal.set(sellerState);
     if (fullName !== undefined) this.userFullNameSignal.set(fullName);
     if (email !== undefined) this.userEmailSignal.set(email);
     if (phone !== undefined) this.userPhoneSignal.set(phone);
@@ -73,6 +76,7 @@ export class AuthService {
   clearSession() {
     this.userRoleSignal.set(null);
     this.sellerApprovedSignal.set(null);
+    this.sellerStateSignal.set(null);
     this.userFullNameSignal.set(null);
     this.userEmailSignal.set(null);
     this.userPhoneSignal.set(null);
@@ -93,6 +97,10 @@ export class AuthService {
 
   isSellerApproved() {
     return this.sellerApprovedSignal();
+  }
+
+  sellerState() {
+    return this.sellerStateSignal();
   }
 
   userFullName() {
@@ -119,6 +127,14 @@ export class AuthService {
     this.http.post('http://104.237.5.100:3000/api/users/login', { email, password },
       {observe: 'response'}).subscribe({
         next: (response: any) => {
+          // Mostrar datos completos del backend en la consola
+          console.log('=== DATOS DEL BACKEND AL INICIAR SESIÓN ===');
+          console.log('Respuesta completa:', response);
+          console.log('Status:', response.status);
+          console.log('Headers:', response.headers);
+          console.log('Body completo:', response.body);
+          console.log('==========================================');
+          
           this.responseStatus.set(response.status);
           
           const body = response.body || {};
@@ -129,36 +145,28 @@ export class AuthService {
             ? userRole.trim() 
             : null;
           
-          const sellerApproved = body.user?.sellerApproved !== undefined 
-            ? body.user.sellerApproved 
-            : (body.sellerApproved !== undefined ? body.sellerApproved : true);
-
-          // Determinar el tipo de respuesta según el rol y estado de aprobación
-          let loginResponse: LoginResponse;
+          // Extraer el estado del vendedor (state: 'pendiente' | 'activo')
+          const sellerState = body.state || body.user?.state || null;
+          const validSellerState = (sellerState && typeof sellerState === 'string') 
+            ? sellerState.trim().toLowerCase() 
+            : null;
           
-          if (validRole === 'vendedor' && !sellerApproved) {
-            // Vendedor no aprobado
-            loginResponse = {
-              success: true,
-              message: 'Tu solicitud para convertirte en vendedor está en proceso. Recibirás una notificación cuando sea aprobada.',
-              type: 'info',
-              user: {
-                role: validRole || undefined,
-                sellerApproved: sellerApproved
-              }
-            };
-          } else {
-            // Login exitoso (cliente o vendedor aprobado)
-            loginResponse = {
-              success: true,
-              message: 'Inicio de sesión exitoso. ¡Bienvenido!',
-              type: 'success',
-              user: {
-                role: validRole || undefined,
-                sellerApproved: sellerApproved
-              }
-            };
-          }
+          // Mantener compatibilidad con sellerApproved para otros usos
+          const sellerApproved = validSellerState === 'activo' 
+            ? true 
+            : (validSellerState === 'pendiente' ? false : true);
+
+          // Siempre mostrar éxito en el login, independientemente del estado del vendedor
+          // El mensaje de estado pendiente se mostrará en la pestaña de Mi restaurante
+          const loginResponse: LoginResponse = {
+            success: true,
+            message: 'Inicio de sesión exitoso. ¡Bienvenido!',
+            type: 'success',
+            user: {
+              role: validRole || undefined,
+              sellerApproved: sellerApproved
+            }
+          };
 
           // Guardar estado de sesión en memoria
           const userFullName = body.user?.fullName || body.fullName || '';
@@ -166,15 +174,34 @@ export class AuthService {
           const userPhone = body.user?.phoneNumber || body.phoneNumber || '';
           const userAddress = body.user?.direccion || body.direccion || '';
           
+          // Mostrar datos procesados en consola
+          console.log('=== DATOS PROCESADOS ===');
+          console.log('Rol:', validRole);
+          console.log('Estado del vendedor (state):', validSellerState);
+          console.log('Seller Approved:', sellerApproved);
+          console.log('Nombre completo:', userFullName);
+          console.log('Email:', userEmail);
+          console.log('Teléfono:', userPhone);
+          console.log('Dirección:', userAddress);
+          console.log('Datos del usuario (body.user):', body.user);
+          console.log('========================');
+          
           // Actualizar el signal primero para que la UI se actualice inmediatamente
-          this.setSession(validRole, sellerApproved, userFullName || null, userEmail || null, userPhone || null, userAddress || null);
+          this.setSession(validRole, sellerApproved, userFullName || null, userEmail || null, userPhone || null, userAddress || null, validSellerState);
           
           // Emitir el resultado después de actualizar el signal
           this.loginResultSubject.next(loginResponse);
           this.resposeMessage.set(loginResponse.message);
         },
         error: (error: any) => {
-          console.log(error);
+          // Mostrar datos de error del backend en la consola
+          console.log('=== ERROR AL INICIAR SESIÓN ===');
+          console.log('Error completo:', error);
+          console.log('Status:', error.status);
+          console.log('Error body:', error.error);
+          console.log('Mensaje de error:', error.error?.message || error.message);
+          console.log('================================');
+          
           this.responseStatus.set(error.status || 500);
           
           const errorMessage = error.error?.message || 'El usuario no existe o las credenciales son incorrectas.';
@@ -235,7 +262,9 @@ export class AuthService {
           const address = isSeller && vendedorData?.direccionRestaurante 
             ? vendedorData.direccionRestaurante 
             : (!isSeller ? direccionCliente || null : null);
-          this.setSession(role || null, isSeller ? true : null, fullName || null, email || null, phoneNumber || null, address);
+          // Cuando un vendedor se registra, su estado inicial es 'pendiente'
+          const sellerState = isSeller ? 'pendiente' : null;
+          this.setSession(role || null, isSeller ? false : null, fullName || null, email || null, phoneNumber || null, address, sellerState);
           
           const registerResponse: RegisterResponse = {
             success: true,
