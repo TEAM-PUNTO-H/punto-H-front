@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, forkJoin } from 'rxjs';
 import type { Restaurant, Dish } from './restaurant.model';
 
 export interface FavoriteRestaurant {
@@ -22,6 +23,9 @@ export interface UserReview {
 
 @Injectable({ providedIn: 'root' })
 export class CatalogService {
+  private readonly RESTAURANT_API = 'http://104.237.5.100:3000/api/restaurant';
+  private readonly PRODUCTS_API = 'http://104.237.5.100:3000/api/products';
+
   private restaurantsSubject = new BehaviorSubject<Restaurant[]>([]);
   restaurants$ = this.restaurantsSubject.asObservable();
 
@@ -153,16 +157,186 @@ export class CatalogService {
   ]);
   reviews$ = this.reviewsSubject.asObservable();
 
-  constructor() {
-    // Inicializar con los datos mock
-    // Los restaurantes creados por vendedores solo persisten durante la sesión
-    // Cuando se conecte con backend, se cargarán desde la base de datos
+  private syncing = false;
+  private hasFetchedFromBackend = false;
+
+  constructor(private http: HttpClient) {
+    // Inicializar con datos mock mientras se carga el backend
     this.restaurantsSubject.next([...this.data]);
-    
+    this.syncMockReviews();
+    this.refreshFromBackend();
+  }
+
+  /**
+   * Trae el restaurante del usuario específico (vendedor) y lo inserta en el catálogo.
+   */
+  loadRestaurantForOwner(ownerId: string | number) {
+    return this.http.get<any>(`${this.RESTAURANT_API}/restaurantById/${ownerId}`, { withCredentials: true })
+      .subscribe({
+        next: (resp: any) => {
+          const mapped = this.mapRestaurantsFromApi(Array.isArray(resp) ? resp : [resp]);
+          if (mapped.length) {
+            this.upsertRestaurants(mapped);
+          }
+        },
+        error: (err: any) => {
+          console.error('No se pudo cargar restaurante por usuario', err);
+        }
+      });
+  }
+
+  /**
+   * Carga restaurantes y productos del backend y actualiza el catálogo.
+   * Se puede forzar con force=true (por ejemplo, tras crear un restaurante/plato).
+   */
+  refreshFromBackend(force: boolean = false) {
+    if (this.syncing && !force) return;
+    this.syncing = true;
+
+    forkJoin({
+      restaurants: this.http.get<any[]>(`${this.RESTAURANT_API}/allRestaurants`, { withCredentials: true }),
+      products: this.http.get<any[]>(`${this.PRODUCTS_API}/allProducts`, { withCredentials: true })
+    }).subscribe({
+      next: ({ restaurants, products }: { restaurants: any[]; products: any[] }) => {
+        // Desempaquetar posibles envoltorios { message, products } / { message, restaurants }
+        const restaurantsList = Array.isArray(restaurants)
+          ? restaurants
+          : Array.isArray((restaurants as any)?.restaurants)
+            ? (restaurants as any).restaurants
+            : [];
+
+        const productsList = Array.isArray(products)
+          ? products
+          : Array.isArray((products as any)?.products)
+            ? (products as any).products
+            : [];
+
+        const mappedRestaurants = this.mapRestaurantsFromApi(restaurantsList);
+        const dishesByKey = this.mapProductsToDishes(productsList);
+        const rawProducts = productsList;
+
+        // Debug rápido para validar datos del backend
+        console.log('[catalog] refreshFromBackend', {
+          restaurantsCount: restaurantsList.length,
+          productsCount: productsList.length,
+          firstRestaurant: restaurantsList[0],
+          firstProduct: productsList[0]
+        });
+
+        // Unir lo que ya está en memoria con lo que viene del backend
+        const current = this.restaurantsSubject.value;
+        const unionMap = new Map<string, Restaurant>();
+        current.forEach((r: Restaurant) => unionMap.set(r.id, r));
+        mappedRestaurants.forEach((r: Restaurant) => unionMap.set(r.id, r));
+
+        let baseList = Array.from(unionMap.values());
+        if (baseList.length === 0) {
+          baseList = [...this.data];
+        }
+
+        // Guardar menús actuales para no perderlos si el backend no devuelve platos
+        const currentMenuById = new Map<string, { [categoria: string]: Dish[] }>();
+        current.forEach((r: Restaurant) => {
+          currentMenuById.set(r.id, r.menu || {});
+        });
+
+        const merged = baseList.map((rest: Restaurant) => {
+          const dishesForRestaurant = [
+            ...(dishesByKey.byRestaurantId[rest.id] || []),
+            ...(rest.ownerId ? (dishesByKey.byOwnerId[String(rest.ownerId)] || []) : [])
+          ];
+
+          // Fallback explícito por id_user si no llegó id_restaurant
+          const ownerFallback = rest.ownerId
+            ? rawProducts
+                .filter((p: any) => String(p.id_user ?? p.userId ?? p.idUser ?? p.ownerId) === String(rest.ownerId))
+                .map((prod: any, idx: number) => ({
+                  id: String(prod.id ?? prod._id ?? prod.id_product ?? prod.productId ?? `dish-${idx}-${Date.now()}`),
+                  nombre: prod.name ?? prod.nombre ?? 'Producto',
+                  precio: Number(prod.price ?? prod.precio ?? 0),
+                  descripcion: prod.description ?? prod.descripcion ?? '',
+                  ingredientes: [],
+                  alergenos: [],
+                  disponible: prod.available ?? prod.disponible ?? true,
+                  imagen: prod.image ?? '🍽️'
+                }))
+            : [];
+
+          const existingMenu = currentMenuById.get(rest.id) || rest.menu || {};
+
+          const menuCandidates = dishesForRestaurant.length > 0 ? dishesForRestaurant : ownerFallback;
+          const menu = menuCandidates.length > 0 ? { Platos: menuCandidates } : existingMenu;
+
+          // Si no hay platos del backend, recalcular con el menú existente
+          const allDishes = menuCandidates.length > 0
+            ? menuCandidates
+            : (Object.values(existingMenu).flat() as Dish[]);
+
+          const precioPromedio = allDishes.length
+            ? allDishes.reduce((sum: number, d: Dish) => sum + (d.precio || 0), 0) / allDishes.length
+            : rest.precioPromedio || 0;
+
+          // Debug por restaurante para verificar asociación de platos
+          console.log('[catalog] restaurant merge', {
+            restId: rest.id,
+            ownerId: rest.ownerId,
+            dishesByRestaurant: dishesByKey.byRestaurantId[rest.id]?.length || 0,
+            dishesByOwner: rest.ownerId ? (dishesByKey.byOwnerId[String(rest.ownerId)]?.length || 0) : 0,
+            ownerFallbackCount: ownerFallback.length,
+            finalMenuCount: menuCandidates.length,
+            precioPromedio
+          });
+
+          return {
+            ...rest,
+            menu,
+            precioPromedio,
+            rangoPrecios: this.calculatePriceRange(precioPromedio)
+          };
+        });
+
+        this.restaurantsSubject.next(merged);
+        this.hasFetchedFromBackend = true;
+      },
+      error: (error: any) => {
+        console.error('Error obteniendo datos del backend', error);
+        if (!this.hasFetchedFromBackend) {
+          this.restaurantsSubject.next([...this.data]);
+        }
+      },
+      complete: () => {
+        this.syncing = false;
+      }
+    });
+  }
+
+  /**
+   * Devuelve el restaurante que pertenece al usuario indicado (id de vendedor).
+   */
+  getRestaurantByOwnerId(ownerId: string | number): Restaurant | undefined {
+    return this.restaurantsSubject.value.find(
+      (r: Restaurant) => String((r as any).ownerId ?? '') === String(ownerId)
+    );
+  }
+
+  /**
+   * Inserta o actualiza restaurantes en el subject principal.
+   */
+  private upsertRestaurants(newOnes: Restaurant[]) {
+    const current = this.restaurantsSubject.value;
+    const mergedMap = new Map<string, Restaurant>();
+
+    [...current, ...newOnes].forEach((r: Restaurant) => {
+      mergedMap.set(r.id, r);
+    });
+
+    this.restaurantsSubject.next(Array.from(mergedMap.values()));
+  }
+
+  private syncMockReviews() {
     // Sincronizar reseñas mock con el servicio de reseñas
     this.data.forEach(restaurant => {
       if (restaurant.resenasList && restaurant.resenasList.length > 0) {
-        // Agregar reseñas mock al servicio
         restaurant.resenasList.forEach(resena => {
           const review: UserReview = {
             id: `${restaurant.id}-${restaurant.resenasList!.indexOf(resena)}`,
@@ -174,8 +348,7 @@ export class CatalogService {
             date: resena.fecha,
             usuario: resena.usuario
           };
-          // Solo agregar si no existe ya
-          const exists = this.reviewsSubject.value.some(r => 
+          const exists = this.reviewsSubject.value.some((r: UserReview) => 
             r.restaurantId === restaurant.id && 
             r.usuario === resena.usuario && 
             r.text === resena.comentario
@@ -184,19 +357,120 @@ export class CatalogService {
             this.reviewsSubject.next([...this.reviewsSubject.value, review]);
           }
         });
-        
-        // Calcular calificación inicial
         this.updateRestaurantRating(restaurant.id);
       }
     });
   }
 
+  private mapTypeFood(tipo: any): string[] {
+    if (!tipo) return ['rapida'];
+    const normalized = String(tipo).trim().toLowerCase();
+    const map: { [k: string]: string[] } = {
+      'mexicana': ['mexicana'],
+      'sushi': ['japonesa'],
+      'hamburguesas': ['rapida'],
+      'cafetería': ['cafeteria'],
+      'cafeteria': ['cafeteria'],
+      'italiana': ['italiana'],
+      'asiática': ['asiatica'],
+      'asiatica': ['asiatica'],
+      'vegetariana': ['vegetariana'],
+      'pizza': ['italiana', 'rapida'],
+      'mariscos': ['mariscos'],
+      'comida rápida': ['rapida'],
+      'rapida': ['rapida']
+    };
+    return map[normalized] || ['rapida'];
+  }
+
+  private mapRestaurantsFromApi(list: any[]): Restaurant[] {
+    if (!Array.isArray(list)) return [];
+
+    return list.map((raw, index) => {
+      const restaurantId = raw.id ?? raw._id ?? raw.id_restaurant ?? raw.idRestaurant ?? `rest-${index}-${Date.now()}`;
+      const ownerId = raw.id_user ?? raw.userId ?? raw.idUser ?? raw.ownerId ?? raw.user?.id;
+
+      const base: Restaurant = {
+        id: String(restaurantId),
+        ownerId: ownerId !== undefined ? String(ownerId) : undefined,
+        nombre: raw.name ?? raw.nombre ?? 'Restaurante',
+        emoji: '🍽️',
+        tipo: this.mapTypeFood(raw.typeFood ?? raw.tipoCocina),
+        calificacion: Number(raw.calificacion ?? raw.rating ?? 0) || 0,
+        resenas: raw.resenas?.length ?? raw.reviews?.length ?? 0,
+        tiempoMin: Number(raw.minTime ?? raw.tiempoMin ?? 15),
+        tiempoMax: Number(raw.maxTime ?? raw.tiempoMax ?? raw.minTime ?? 30),
+        costoEnvio: Number(raw.sendCost ?? raw.costoEnvio ?? 0),
+        precioPromedio: Number(raw.averagePrice ?? raw.precioPromedio ?? 0),
+        rangoPrecios: this.calculatePriceRange(Number(raw.averagePrice ?? raw.precioPromedio ?? 0)),
+        abierto: (raw.active ?? raw.abierto) ?? true,
+        delivery: true,
+        nuevo: false,
+        promocion: false,
+        descripcion: raw.description ?? raw.descripcion ?? '',
+        direccion: raw.address ?? raw.direccion ?? '',
+        telefono: raw.phoneNumber ?? raw.telefono ?? '',
+        horario: raw.schedule ?? raw.horario ?? '',
+        galeria: raw.image ? [raw.image] : ['🍽️'],
+        menu: {},
+        resenasList: Array.isArray(raw.reviews)
+          ? raw.reviews.map((rev: any) => ({
+              usuario: rev.usuario ?? rev.user ?? 'Usuario',
+              calificacion: Number(rev.calificacion ?? rev.rating ?? 0),
+              comentario: rev.comentario ?? rev.text ?? '',
+              fecha: rev.fecha ?? rev.date ?? ''
+            }))
+          : []
+      };
+
+      return base;
+    });
+  }
+
+  private mapProductsToDishes(products: any[]): {
+    byRestaurantId: { [key: string]: Dish[] };
+    byOwnerId: { [key: string]: Dish[] };
+  } {
+    const byRestaurantId: { [key: string]: Dish[] } = {};
+    const byOwnerId: { [key: string]: Dish[] } = {};
+
+    if (!Array.isArray(products)) return { byRestaurantId, byOwnerId };
+
+    products.forEach((prod, index) => {
+      const restaurantKey = prod.id_restaurant ?? prod.restaurantId ?? prod.idRestaurant ?? null;
+      const ownerKey = prod.id_user ?? prod.userId ?? prod.idUser ?? prod.ownerId ?? null;
+
+      const dish: Dish = {
+        id: String(prod.id ?? prod._id ?? prod.id_product ?? prod.productId ?? `dish-${index}-${Date.now()}`),
+        nombre: prod.name ?? prod.nombre ?? 'Producto',
+        precio: Number(prod.price ?? prod.precio ?? 0),
+        descripcion: prod.description ?? prod.descripcion ?? '',
+        ingredientes: [],
+        alergenos: [],
+        disponible: prod.available ?? prod.disponible ?? true,
+        imagen: prod.image ?? '🍽️'
+      };
+
+      if (restaurantKey !== null && restaurantKey !== undefined) {
+        const key = String(restaurantKey);
+        byRestaurantId[key] = [...(byRestaurantId[key] || []), dish];
+      }
+
+      if (ownerKey !== null && ownerKey !== undefined) {
+        const key = String(ownerKey);
+        byOwnerId[key] = [...(byOwnerId[key] || []), dish];
+      }
+    });
+
+    return { byRestaurantId, byOwnerId };
+  }
+
   getRestaurants(): Restaurant[] {
     // Obtener todos los restaurantes del subject (ya incluye los mock y los creados por vendedores)
     // Eliminar duplicados por ID para evitar restaurantes repetidos
-    const allRestaurants = this.restaurantsSubject.value;
-    const uniqueRestaurants = allRestaurants.filter((restaurant, index, self) =>
-      index === self.findIndex(r => r.id === restaurant.id)
+    const allRestaurants: Restaurant[] = this.restaurantsSubject.value;
+    const uniqueRestaurants = allRestaurants.filter((restaurant: Restaurant, index: number, self: Restaurant[]) =>
+      index === self.findIndex((r: Restaurant) => r.id === restaurant.id)
     );
     return JSON.parse(JSON.stringify(uniqueRestaurants));
   }
@@ -223,7 +497,8 @@ export class CatalogService {
     };
 
     const nuevoRestaurante: Restaurant = {
-      id: `seller-${Date.now()}`,
+      id: String(restaurantData.id || restaurantData.restaurantId || `seller-${Date.now()}`),
+      ownerId: restaurantData.id_user || restaurantData.ownerId || restaurantData.userId,
       nombre: restaurantData.nombre,
       emoji: '🍽️',
       tipo: tipoCocinaMap[restaurantData.tipoCocina] || ['rapida'],
@@ -256,7 +531,7 @@ export class CatalogService {
 
   updateRestaurant(restaurantId: string, updates: Partial<Restaurant>): void {
     const current = this.restaurantsSubject.value;
-    const updated = current.map(r => {
+    const updated = current.map((r: Restaurant) => {
       if (r.id === restaurantId) {
         // Crear una copia profunda del restaurante con las actualizaciones
         const updatedRestaurant = { ...r };
@@ -287,7 +562,7 @@ export class CatalogService {
 
   addDishToRestaurant(restaurantId: string, dishData: any): void {
     const current = this.restaurantsSubject.value;
-    const restaurant = current.find(r => r.id === restaurantId);
+    const restaurant = current.find((r: Restaurant) => r.id === restaurantId);
     
     if (!restaurant) {
       console.error('Restaurante no encontrado:', restaurantId);
@@ -323,7 +598,7 @@ export class CatalogService {
 
     // Crear una copia profunda del menú para evitar mutaciones directas
     const menuCopy: { [categoria: string]: Dish[] } = {};
-    Object.keys(restaurant.menu).forEach(categoria => {
+    Object.keys(restaurant.menu).forEach((categoria: string) => {
       menuCopy[categoria] = [...restaurant.menu[categoria]];
     });
     
@@ -333,7 +608,7 @@ export class CatalogService {
     }
     
     // Verificar si el plato ya existe (en caso de edición)
-    const existingIndex = menuCopy['Platos'].findIndex(d => d.id === nuevoPlato.id);
+    const existingIndex = menuCopy['Platos'].findIndex((d: Dish) => d.id === nuevoPlato.id);
     if (existingIndex >= 0) {
       menuCopy['Platos'][existingIndex] = nuevoPlato;
     } else {
@@ -341,9 +616,9 @@ export class CatalogService {
     }
 
     // Actualizar precio promedio
-    const allDishes = Object.values(menuCopy).flat();
+    const allDishes = Object.values(menuCopy).flat() as Dish[];
     const precioPromedio = allDishes.length > 0
-      ? allDishes.reduce((sum, d) => sum + d.precio, 0) / allDishes.length
+      ? allDishes.reduce((sum: number, d: Dish) => sum + d.precio, 0) / allDishes.length
       : 0;
 
     // Actualizar el restaurante con el nuevo menú
@@ -358,19 +633,19 @@ export class CatalogService {
 
   removeDishFromRestaurant(restaurantId: string, dishId: string): void {
     const current = this.restaurantsSubject.value;
-    const restaurant = current.find(r => r.id === restaurantId);
+    const restaurant = current.find((r: Restaurant) => r.id === restaurantId);
     
     if (!restaurant) return;
 
     // Buscar y eliminar el plato de todas las categorías
-    Object.keys(restaurant.menu).forEach(categoria => {
-      restaurant.menu[categoria] = restaurant.menu[categoria].filter(d => d.id !== dishId);
+    Object.keys(restaurant.menu).forEach((categoria: string) => {
+      restaurant.menu[categoria] = restaurant.menu[categoria].filter((d: Dish) => d.id !== dishId);
     });
 
     // Actualizar precio promedio
-    const allDishes = Object.values(restaurant.menu).flat();
+    const allDishes = Object.values(restaurant.menu).flat() as Dish[];
     const precioPromedio = allDishes.length > 0
-      ? allDishes.reduce((sum, d) => sum + d.precio, 0) / allDishes.length
+      ? allDishes.reduce((sum: number, d: Dish) => sum + d.precio, 0) / allDishes.length
       : 0;
 
     this.updateRestaurant(restaurantId, {
@@ -381,8 +656,9 @@ export class CatalogService {
   }
 
   getRestaurantById(id: string): Restaurant | undefined {
-    const allRestaurants = [...this.data, ...this.restaurantsSubject.value];
-    return allRestaurants.find(r => r.id === id);
+    const fromSubject = this.restaurantsSubject.value.find((r: Restaurant) => r.id === id);
+    if (fromSubject) return fromSubject;
+    return this.data.find(r => r.id === id);
   }
 
   private calculatePriceRange(precioPromedio: number): string {
@@ -404,12 +680,12 @@ export class CatalogService {
 
 
   isRestaurantFavorite(id: string): boolean {
-    return this.favoritesSubject.value.some(f => f.id === id);
+    return this.favoritesSubject.value.some((f: FavoriteRestaurant) => f.id === id);
   }
 
   setFavorite(restaurant: Restaurant, shouldFavorite: boolean): void {
     const current = this.favoritesSubject.value;
-    const exists = current.some(f => f.id === restaurant.id);
+    const exists = current.some((f: FavoriteRestaurant) => f.id === restaurant.id);
 
     if (shouldFavorite && !exists) {
       const updated: FavoriteRestaurant = {
@@ -422,14 +698,14 @@ export class CatalogService {
     }
 
     if (!shouldFavorite && exists) {
-      this.favoritesSubject.next(current.filter(f => f.id !== restaurant.id));
+      this.favoritesSubject.next(current.filter((f: FavoriteRestaurant) => f.id !== restaurant.id));
     }
   }
 
   // Actualizar calificación en favoritos cuando cambie
   updateFavoriteRating(restaurantId: string, newRating: number): void {
     const current = this.favoritesSubject.value;
-    const updated = current.map(f => {
+    const updated = current.map((f: FavoriteRestaurant) => {
       if (f.id === restaurantId) {
         return { ...f, rating: newRating };
       }
@@ -457,10 +733,10 @@ export class CatalogService {
 
   private updateRestaurantRating(restaurantId: string): void {
     // Obtener todas las reseñas del restaurante desde el servicio
-    const restaurantReviews = this.reviewsSubject.value.filter(r => r.restaurantId === restaurantId);
+    const restaurantReviews = this.reviewsSubject.value.filter((r: UserReview) => r.restaurantId === restaurantId);
     
     // Convertir UserReview a formato de resenasList
-    const resenasList = restaurantReviews.map(review => ({
+    const resenasList = restaurantReviews.map((review: UserReview) => ({
       usuario: review.usuario,
       calificacion: review.rating,
       comentario: review.text,
@@ -478,7 +754,7 @@ export class CatalogService {
     }
 
     // Calcular promedio
-    const suma = restaurantReviews.reduce((sum, review) => sum + review.rating, 0);
+    const suma = restaurantReviews.reduce((sum: number, review: UserReview) => sum + review.rating, 0);
     const promedio = suma / restaurantReviews.length;
     const promedioRedondeado = Math.round(promedio * 10) / 10; // Redondear a 1 decimal
 
@@ -494,10 +770,10 @@ export class CatalogService {
   }
 
   updateUserReview(reviewId: string, changes: Partial<Pick<UserReview, 'title' | 'text' | 'rating'>>): void {
-    const review = this.reviewsSubject.value.find(r => r.id === reviewId);
+    const review = this.reviewsSubject.value.find((r: UserReview) => r.id === reviewId);
     if (!review) return;
 
-    const updated = this.reviewsSubject.value.map(r => {
+    const updated = this.reviewsSubject.value.map((r: UserReview) => {
       if (r.id !== reviewId) return r;
       return {
         ...r,
@@ -512,11 +788,11 @@ export class CatalogService {
   }
 
   deleteUserReview(reviewId: string): void {
-    const review = this.reviewsSubject.value.find(r => r.id === reviewId);
+    const review = this.reviewsSubject.value.find((r: UserReview) => r.id === reviewId);
     if (!review) return;
 
     const restaurantId = review.restaurantId;
-    this.reviewsSubject.next(this.reviewsSubject.value.filter(r => r.id !== reviewId));
+    this.reviewsSubject.next(this.reviewsSubject.value.filter((r: UserReview) => r.id !== reviewId));
     
     // Actualizar calificación del restaurante
     this.updateRestaurantRating(restaurantId);
@@ -524,10 +800,10 @@ export class CatalogService {
 
   // Método para obtener el desglose de calificaciones por estrellas
   getRatingBreakdown(restaurantId: string): { [rating: number]: number } {
-    const reviews = this.reviewsSubject.value.filter(r => r.restaurantId === restaurantId);
+    const reviews = this.reviewsSubject.value.filter((r: UserReview) => r.restaurantId === restaurantId);
     const breakdown: { [rating: number]: number } = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
     
-    reviews.forEach(review => {
+    reviews.forEach((review: UserReview) => {
       const rating = Math.round(review.rating);
       if (rating >= 1 && rating <= 5) {
         breakdown[rating] = (breakdown[rating] || 0) + 1;

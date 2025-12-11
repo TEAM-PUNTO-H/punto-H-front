@@ -9,7 +9,7 @@
     </div>
 
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-      <div>
+      <div class="separacion" >
         <label for="email">Correo electrónico</label>
         <input
           id="email"
@@ -20,7 +20,7 @@
         />
       </div>
 
-      <div>
+      <div class="separacion">
         <label for="password">Contraseña</label>
         <input
           id="password"
@@ -44,14 +44,6 @@
         ¿No tienes cuenta?
         <a routerLink="/register" class="text-orange">Regístrate aquí</a>
       </div>
-
-      <div class="divider">
-        <span>O continúa con</span>
-      </div>
-
-      <button type="button" class="btn-outline w-full">
-        📧 Continuar con Google
-      </button>
     </form>
 
     <div class="text-center" style="margin-top: 1rem;">
