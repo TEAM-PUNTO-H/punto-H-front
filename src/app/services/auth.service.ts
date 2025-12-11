@@ -62,7 +62,7 @@ export class AuthService {
     this.sellerApprovedSignal.set(sellerApproved);
 
     console.log(this.userIdSignal());
-    if (id !== undefined) this.userIdSignal.set(id);
+    if (userId !== undefined) this.userIdSignal.set(userId);
     if (sellerState !== undefined) this.sellerStateSignal.set(sellerState);
     if (fullName !== undefined) this.userFullNameSignal.set(fullName);
     if (email !== undefined) this.userEmailSignal.set(email);
