@@ -11,6 +11,7 @@ export interface Dish {
 
 export interface Restaurant {
   id: string;
+  ownerId?: string | number;
   nombre: string;
   emoji?: string;
   tipo: string[]; // e.g. ['mexicana','rapida']
@@ -33,4 +34,3 @@ export interface Restaurant {
   menu: { [categoria: string]: Dish[] };
   resenasList?: { usuario: string; calificacion: number; comentario: string; fecha: string }[];
 }
-
