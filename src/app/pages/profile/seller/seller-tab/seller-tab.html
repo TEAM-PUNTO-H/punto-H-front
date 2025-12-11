@@ -43,6 +43,7 @@
     <app-dish-form 
       *ngIf="currentView === 'add-dish'"
       [isEditMode]="false"
+      [loading]="savingDish"
       (saveDish)="onSaveDish($event)"
       (cancel)="onCancelDishForm()">
     </app-dish-form>
@@ -52,6 +53,7 @@
       *ngIf="currentView === 'edit-dish'"
       [isEditMode]="true"
       [dish]="getDishToEdit()"
+      [loading]="savingDish"
       (saveDish)="onSaveDish($event)"
       (deleteDish)="onDeleteDish($event)"
       (cancel)="onCancelDishForm()">

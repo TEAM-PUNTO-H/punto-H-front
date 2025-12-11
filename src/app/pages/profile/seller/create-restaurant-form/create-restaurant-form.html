@@ -96,6 +96,18 @@
     </label>
 
     <label>
+      Teléfono
+      <input 
+        formControlName="phoneNumber" 
+        type="tel" 
+        placeholder="Ej: 3001234567"
+        [class.error]="phoneNumber?.invalid && phoneNumber?.touched">
+      <small class="error-text" *ngIf="phoneNumber?.invalid && phoneNumber?.touched">
+        El teléfono es requerido y debe tener al menos 7 caracteres
+      </small>
+    </label>
+
+    <label>
       Foto del restaurante
       <div class="image-upload">
         <input 
@@ -113,9 +125,13 @@
       </div>
     </label>
 
-    <button class="btn-orange-large" type="submit" [disabled]="restaurantForm.invalid">
-      Crear Restaurante
+    <div class="error-message" *ngIf="error">
+      {{ error }}
+    </div>
+
+    <button class="btn-orange-large" type="submit" [disabled]="restaurantForm.invalid || loading">
+      <span *ngIf="!loading">Crear Restaurante</span>
+      <span *ngIf="loading">Creando...</span>
     </button>
   </form>
 </div>
-
