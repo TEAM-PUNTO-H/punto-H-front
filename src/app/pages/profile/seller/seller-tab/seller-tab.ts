@@ -141,6 +141,14 @@ export class SellerTabComponent implements OnInit {
     const userId = this.authService.userId();
     if (!userId) return;
 
+    // Intentar recuperar de localStorage mientras llega la data
+    const storedId = localStorage.getItem(this.STORAGE_KEY);
+    if (storedId) {
+      this.restaurantId = storedId;
+      this.hasRestaurant = true;
+      this.currentView = 'dashboard';
+    }
+
     // Forzar una recarga desde backend para traer el restaurante del vendedor
     this.catalogService.refreshFromBackend();
     // Además pedir explícitamente el restaurante de este usuario
@@ -152,6 +160,7 @@ export class SellerTabComponent implements OnInit {
       this.restaurantId = sellerRestaurant.id;
       this.hasRestaurant = true;
       localStorage.setItem(this.STORAGE_KEY, sellerRestaurant.id);
+      this.currentView = 'dashboard';
     }
 
     // Mantenerse sincronizado ante futuros cambios
@@ -161,6 +170,7 @@ export class SellerTabComponent implements OnInit {
         this.restaurantId = mine.id;
         this.hasRestaurant = true;
         localStorage.setItem(this.STORAGE_KEY, mine.id);
+        this.currentView = 'dashboard';
       }
     });
   }

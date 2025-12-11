@@ -198,19 +198,94 @@ export class CatalogService {
       products: this.http.get<any[]>(`${this.PRODUCTS_API}/allProducts`, { withCredentials: true })
     }).subscribe({
       next: ({ restaurants, products }: { restaurants: any[]; products: any[] }) => {
-        const mappedRestaurants = this.mapRestaurantsFromApi(restaurants || []);
-        const dishesByKey = this.mapProductsToDishes(products || []);
+        // Desempaquetar posibles envoltorios { message, products } / { message, restaurants }
+        const restaurantsList = Array.isArray(restaurants)
+          ? restaurants
+          : Array.isArray((restaurants as any)?.restaurants)
+            ? (restaurants as any).restaurants
+            : [];
 
-        const merged = mappedRestaurants.map(rest => {
+        const productsList = Array.isArray(products)
+          ? products
+          : Array.isArray((products as any)?.products)
+            ? (products as any).products
+            : [];
+
+        const mappedRestaurants = this.mapRestaurantsFromApi(restaurantsList);
+        const dishesByKey = this.mapProductsToDishes(productsList);
+        const rawProducts = productsList;
+
+        // Debug rápido para validar datos del backend
+        console.log('[catalog] refreshFromBackend', {
+          restaurantsCount: restaurantsList.length,
+          productsCount: productsList.length,
+          firstRestaurant: restaurantsList[0],
+          firstProduct: productsList[0]
+        });
+
+        // Unir lo que ya está en memoria con lo que viene del backend
+        const current = this.restaurantsSubject.value;
+        const unionMap = new Map<string, Restaurant>();
+        current.forEach((r: Restaurant) => unionMap.set(r.id, r));
+        mappedRestaurants.forEach((r: Restaurant) => unionMap.set(r.id, r));
+
+        let baseList = Array.from(unionMap.values());
+        if (baseList.length === 0) {
+          baseList = [...this.data];
+        }
+
+        // Guardar menús actuales para no perderlos si el backend no devuelve platos
+        const currentMenuById = new Map<string, { [categoria: string]: Dish[] }>();
+        current.forEach((r: Restaurant) => {
+          currentMenuById.set(r.id, r.menu || {});
+        });
+
+        const merged = baseList.map((rest: Restaurant) => {
           const dishesForRestaurant = [
             ...(dishesByKey.byRestaurantId[rest.id] || []),
             ...(rest.ownerId ? (dishesByKey.byOwnerId[String(rest.ownerId)] || []) : [])
           ];
 
-          const menu = dishesForRestaurant.length > 0 ? { Platos: dishesForRestaurant } : rest.menu || {};
-          const precioPromedio = dishesForRestaurant.length
-            ? dishesForRestaurant.reduce((sum, d) => sum + (d.precio || 0), 0) / dishesForRestaurant.length
+          // Fallback explícito por id_user si no llegó id_restaurant
+          const ownerFallback = rest.ownerId
+            ? rawProducts
+                .filter((p: any) => String(p.id_user ?? p.userId ?? p.idUser ?? p.ownerId) === String(rest.ownerId))
+                .map((prod: any, idx: number) => ({
+                  id: String(prod.id ?? prod._id ?? prod.id_product ?? prod.productId ?? `dish-${idx}-${Date.now()}`),
+                  nombre: prod.name ?? prod.nombre ?? 'Producto',
+                  precio: Number(prod.price ?? prod.precio ?? 0),
+                  descripcion: prod.description ?? prod.descripcion ?? '',
+                  ingredientes: [],
+                  alergenos: [],
+                  disponible: prod.available ?? prod.disponible ?? true,
+                  imagen: prod.image ?? '🍽️'
+                }))
+            : [];
+
+          const existingMenu = currentMenuById.get(rest.id) || rest.menu || {};
+
+          const menuCandidates = dishesForRestaurant.length > 0 ? dishesForRestaurant : ownerFallback;
+          const menu = menuCandidates.length > 0 ? { Platos: menuCandidates } : existingMenu;
+
+          // Si no hay platos del backend, recalcular con el menú existente
+          const allDishes = menuCandidates.length > 0
+            ? menuCandidates
+            : (Object.values(existingMenu).flat() as Dish[]);
+
+          const precioPromedio = allDishes.length
+            ? allDishes.reduce((sum: number, d: Dish) => sum + (d.precio || 0), 0) / allDishes.length
             : rest.precioPromedio || 0;
+
+          // Debug por restaurante para verificar asociación de platos
+          console.log('[catalog] restaurant merge', {
+            restId: rest.id,
+            ownerId: rest.ownerId,
+            dishesByRestaurant: dishesByKey.byRestaurantId[rest.id]?.length || 0,
+            dishesByOwner: rest.ownerId ? (dishesByKey.byOwnerId[String(rest.ownerId)]?.length || 0) : 0,
+            ownerFallbackCount: ownerFallback.length,
+            finalMenuCount: menuCandidates.length,
+            precioPromedio
+          });
 
           return {
             ...rest,
@@ -220,7 +295,7 @@ export class CatalogService {
           };
         });
 
-        this.restaurantsSubject.next(merged.length ? merged : [...this.data]);
+        this.restaurantsSubject.next(merged);
         this.hasFetchedFromBackend = true;
       },
       error: (error: any) => {
@@ -363,7 +438,7 @@ export class CatalogService {
 
     products.forEach((prod, index) => {
       const restaurantKey = prod.id_restaurant ?? prod.restaurantId ?? prod.idRestaurant ?? null;
-      const ownerKey = prod.id_user ?? prod.userId ?? prod.ownerId ?? null;
+      const ownerKey = prod.id_user ?? prod.userId ?? prod.idUser ?? prod.ownerId ?? null;
 
       const dish: Dish = {
         id: String(prod.id ?? prod._id ?? prod.id_product ?? prod.productId ?? `dish-${index}-${Date.now()}`),
