@@ -56,7 +56,7 @@ export class AuthService {
     phone?: string | null,
     address?: string | null,
     sellerState?: string | null,
-    id?: number | null
+    userId?: number | null
   ) {
     this.userRoleSignal.set(role);
     this.sellerApprovedSignal.set(sellerApproved);
@@ -68,7 +68,7 @@ export class AuthService {
     if (email !== undefined) this.userEmailSignal.set(email);
     if (phone !== undefined) this.userPhoneSignal.set(phone);
     if (address !== undefined) this.userAddressSignal.set(address);
-
+    if (userId !== undefined) this.userIdSignal.set(userId);
 
     // Si es un nuevo registro, establecer la fecha actual como "Miembro desde"
     if (fullName && !this.userMemberSinceSignal()) {
@@ -134,6 +134,7 @@ export class AuthService {
     return this.userAddressSignal();
   }
 
+
   login(email: string, password: string): void {
     this.http.post('http://104.237.5.100:3000/api/users/login', { email, password },
       {observe: 'response'}).subscribe({
@@ -184,7 +185,7 @@ export class AuthService {
           const userEmail = body.user?.email || body.email || email;
           const userPhone = body.user?.phoneNumber || body.phoneNumber || '';
           const userAddress = body.user?.direccion || body.direccion || '';
-          const id = body.user?.id || body.id || null;
+          const userId = body.user?.id || body.id || null;
 
           // Mostrar datos procesados en consola
           console.log('=== DATOS PROCESADOS ===');
@@ -195,12 +196,12 @@ export class AuthService {
           console.log('Email:', userEmail);
           console.log('Teléfono:', userPhone);
           console.log('Dirección:', userAddress);
-          console.log('ID del usuario:', id);
+          console.log('ID Usuario:', userId);
           console.log('Datos del usuario (body.user):', body.user);
           console.log('========================');
 
           // Actualizar el signal primero para que la UI se actualice inmediatamente
-          this.setSession(validRole, sellerApproved, userFullName || null, userEmail || null, userPhone || null, userAddress || null, validSellerState, id || null);
+          this.setSession(validRole, sellerApproved, userFullName || null, userEmail || null, userPhone || null, userAddress || null, validSellerState, userId);
 
           // Emitir el resultado después de actualizar el signal
           this.loginResultSubject.next(loginResponse);
@@ -269,6 +270,9 @@ export class AuthService {
           console.log(response);
           this.responseStatus.set(response.status);
 
+          const body = response.body || {};
+          const userId = body.user?.id || body.id || null;
+
           // Establecer sesión con el rol registrado para que la UI muestre las opciones correctas
           const isSeller = role === 'vendedor';
           // Para vendedores, usar direccionRestaurante si existe, para compradores usar direccionCliente
@@ -277,7 +281,7 @@ export class AuthService {
             : (!isSeller ? direccionCliente || null : null);
           // Cuando un vendedor se registra, su estado inicial es 'pendiente'
           const sellerState = isSeller ? 'pendiente' : null;
-          this.setSession(role || null, isSeller ? false : null, fullName || null, email || null, phoneNumber || null, address, sellerState);
+          this.setSession(role || null, isSeller ? false : null, fullName || null, email || null, phoneNumber || null, address, sellerState, userId);
 
           const registerResponse: RegisterResponse = {
             success: true,

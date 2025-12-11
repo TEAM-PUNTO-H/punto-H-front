@@ -21,6 +21,7 @@ export interface Dish {
 export class DishFormComponent implements OnInit {
   @Input() dish: Dish | null = null;
   @Input() isEditMode: boolean = false;
+  @Input() loading: boolean = false;
   @Output() saveDish = new EventEmitter<Dish>();
   @Output() deleteDish = new EventEmitter<string>();
   @Output() cancel = new EventEmitter<void>();
@@ -104,4 +105,3 @@ export class DishFormComponent implements OnInit {
   get precio() { return this.dishForm.get('precio'); }
   get nivelPicante() { return this.dishForm.get('nivelPicante'); }
 }
-
