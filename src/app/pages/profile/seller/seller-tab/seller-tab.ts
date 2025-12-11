@@ -138,17 +138,31 @@ export class SellerTabComponent implements OnInit {
   }
 
   private loadRestaurantState() {
-    // Buscar restaurantes creados por vendedores en el catálogo
-    // Solo persisten durante la sesión actual (no en localStorage)
-    const allRestaurants = this.catalogService.getRestaurants();
-    const sellerRestaurant = allRestaurants.find(r => r.id.startsWith('seller-'));
+    const userId = this.authService.userId();
+    if (!userId) return;
+
+    // Forzar una recarga desde backend para traer el restaurante del vendedor
+    this.catalogService.refreshFromBackend();
+    // Además pedir explícitamente el restaurante de este usuario
+    this.catalogService.loadRestaurantForOwner(userId);
+
+    // Revisar inmediatamente con los datos actuales
+    const sellerRestaurant = this.catalogService.getRestaurantByOwnerId(userId);
     if (sellerRestaurant) {
       this.restaurantId = sellerRestaurant.id;
       this.hasRestaurant = true;
-      // Guardar solo el ID en localStorage para recordar qué restaurante mostrar
-      // pero los datos del restaurante solo están en memoria durante la sesión
       localStorage.setItem(this.STORAGE_KEY, sellerRestaurant.id);
     }
+
+    // Mantenerse sincronizado ante futuros cambios
+    this.catalogService.restaurants$.subscribe(() => {
+      const mine = this.catalogService.getRestaurantByOwnerId(userId);
+      if (mine) {
+        this.restaurantId = mine.id;
+        this.hasRestaurant = true;
+        localStorage.setItem(this.STORAGE_KEY, mine.id);
+      }
+    });
   }
 
   private initializeView() {
@@ -162,8 +176,9 @@ export class SellerTabComponent implements OnInit {
 
   onRestaurantCreated(restaurantData: any) {
     this.restaurantData = restaurantData;
-    // Agregar restaurante al catálogo
-    this.restaurantId = this.catalogService.addRestaurant(restaurantData);
+    // Agregar restaurante al catálogo localmente mientras llega la actualización del backend
+    const newId = restaurantData.id || restaurantData.restaurant?.id || null;
+    this.restaurantId = newId ? String(newId) : this.catalogService.addRestaurant(restaurantData);
     this.hasRestaurant = true;
     
     // Guardar el ID del restaurante en localStorage para persistencia
@@ -171,6 +186,9 @@ export class SellerTabComponent implements OnInit {
       localStorage.setItem(this.STORAGE_KEY, this.restaurantId);
     }
     
+    // Refrescar datos desde backend para obtener el restaurante real del usuario
+    this.catalogService.refreshFromBackend(true);
+
     this.currentView = 'dashboard';
     console.log('Restaurante creado:', restaurantData, 'ID:', this.restaurantId);
   }
@@ -252,6 +270,8 @@ export class SellerTabComponent implements OnInit {
             id: response.id || response.product?.id || `dish-${Date.now()}`
           };
           this.catalogService.addDishToRestaurant(this.restaurantId!, dishWithId);
+          // Refrescar catálogo desde backend para mantenerlo alineado
+          this.catalogService.refreshFromBackend(true);
           
           this.currentView = 'dishes';
           this.editingDishId = null;

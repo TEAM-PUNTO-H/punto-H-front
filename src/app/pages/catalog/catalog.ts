@@ -1,7 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, ParamMap } from '@angular/router';
 
 import { CatalogService } from './catalog.service';
 import type { Restaurant, Dish } from './restaurant.model';
@@ -17,7 +17,7 @@ import { DishDetailComponent } from './components/dish-detail/dish-detail';
   templateUrl: './catalog.html',
   styleUrls: ['./catalog.css']
 })
-export class CatalogPage {
+export class CatalogPage implements OnInit {
   allRestaurants: Restaurant[] = [];
   restaurants: Restaurant[] = [];
 
@@ -63,6 +63,10 @@ export class CatalogPage {
         }
       }
     });
+  }
+
+  ngOnInit(): void {
+    this.svc.refreshFromBackend();
   }
 
   private loadRestaurants() {
@@ -187,7 +191,7 @@ export class CatalogPage {
   }
 
   private listenForRestaurantParam() {
-    this.route.queryParamMap.subscribe(params => {
+    this.route.queryParamMap.subscribe((params: ParamMap) => {
       const targetId = params.get('restaurant');
       if (targetId) {
         const found = this.allRestaurants.find(r => r.id === targetId);
