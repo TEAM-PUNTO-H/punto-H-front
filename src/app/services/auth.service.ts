@@ -27,7 +27,7 @@ export class AuthService {
   resposeMessage = signal('');
   private loginResultSubject = new Subject<LoginResponse>();
   loginResult$ = this.loginResultSubject.asObservable();
-  
+
   private registerResultSubject = new Subject<RegisterResponse>();
   registerResult$ = this.registerResultSubject.asObservable();
 
@@ -40,6 +40,7 @@ export class AuthService {
   private userPhoneSignal = signal<string | null>(null);
   private userAddressSignal = signal<string | null>(null);
   private userMemberSinceSignal = signal<string | null>(null);
+  private userIdSignal = signal<number | null>(null);
 
   // Signal computed que se actualiza automáticamente cuando cambia userRoleSignal
   isLoggedIn = computed(() => {
@@ -48,22 +49,27 @@ export class AuthService {
   });
 
   setSession(
-    role: string | null, 
-    sellerApproved: boolean | null, 
-    fullName?: string | null, 
+    role: string | null,
+    sellerApproved: boolean | null,
+    fullName?: string | null,
     email?: string | null,
     phone?: string | null,
     address?: string | null,
-    sellerState?: string | null
+    sellerState?: string | null,
+    id?: number | null
   ) {
     this.userRoleSignal.set(role);
     this.sellerApprovedSignal.set(sellerApproved);
+
+    console.log(this.userIdSignal());
+    if (id !== undefined) this.userIdSignal.set(id);
     if (sellerState !== undefined) this.sellerStateSignal.set(sellerState);
     if (fullName !== undefined) this.userFullNameSignal.set(fullName);
     if (email !== undefined) this.userEmailSignal.set(email);
     if (phone !== undefined) this.userPhoneSignal.set(phone);
     if (address !== undefined) this.userAddressSignal.set(address);
-    
+
+
     // Si es un nuevo registro, establecer la fecha actual como "Miembro desde"
     if (fullName && !this.userMemberSinceSignal()) {
       const now = new Date();
@@ -82,6 +88,7 @@ export class AuthService {
     this.userPhoneSignal.set(null);
     this.userAddressSignal.set(null);
     this.userMemberSinceSignal.set(null);
+    this.userIdSignal.set(null);
   }
 
   // Método para cerrar sesión
@@ -97,6 +104,10 @@ export class AuthService {
 
   isSellerApproved() {
     return this.sellerApprovedSignal();
+  }
+
+  userId() {
+    return this.userIdSignal();
   }
 
   sellerState() {
@@ -134,26 +145,26 @@ export class AuthService {
           console.log('Headers:', response.headers);
           console.log('Body completo:', response.body);
           console.log('==========================================');
-          
+
           this.responseStatus.set(response.status);
-          
+
           const body = response.body || {};
-          
+
           // Extraer el role de la respuesta (ahora viene directamente en body.role)
           const userRole = body.role || body.user?.role || null;
-          const validRole = (userRole && typeof userRole === 'string' && userRole.trim() !== '') 
-            ? userRole.trim() 
+          const validRole = (userRole && typeof userRole === 'string' && userRole.trim() !== '')
+            ? userRole.trim()
             : null;
-          
+
           // Extraer el estado del vendedor (state: 'pendiente' | 'activo')
           const sellerState = body.state || body.user?.state || null;
-          const validSellerState = (sellerState && typeof sellerState === 'string') 
-            ? sellerState.trim().toLowerCase() 
+          const validSellerState = (sellerState && typeof sellerState === 'string')
+            ? sellerState.trim().toLowerCase()
             : null;
-          
+
           // Mantener compatibilidad con sellerApproved para otros usos
-          const sellerApproved = validSellerState === 'activo' 
-            ? true 
+          const sellerApproved = validSellerState === 'activo'
+            ? true
             : (validSellerState === 'pendiente' ? false : true);
 
           // Siempre mostrar éxito en el login, independientemente del estado del vendedor
@@ -173,7 +184,8 @@ export class AuthService {
           const userEmail = body.user?.email || body.email || email;
           const userPhone = body.user?.phoneNumber || body.phoneNumber || '';
           const userAddress = body.user?.direccion || body.direccion || '';
-          
+          const id = body.user?.id || body.id || null;
+
           // Mostrar datos procesados en consola
           console.log('=== DATOS PROCESADOS ===');
           console.log('Rol:', validRole);
@@ -183,12 +195,13 @@ export class AuthService {
           console.log('Email:', userEmail);
           console.log('Teléfono:', userPhone);
           console.log('Dirección:', userAddress);
+          console.log('ID del usuario:', id);
           console.log('Datos del usuario (body.user):', body.user);
           console.log('========================');
-          
+
           // Actualizar el signal primero para que la UI se actualice inmediatamente
-          this.setSession(validRole, sellerApproved, userFullName || null, userEmail || null, userPhone || null, userAddress || null, validSellerState);
-          
+          this.setSession(validRole, sellerApproved, userFullName || null, userEmail || null, userPhone || null, userAddress || null, validSellerState, id || null);
+
           // Emitir el resultado después de actualizar el signal
           this.loginResultSubject.next(loginResponse);
           this.resposeMessage.set(loginResponse.message);
@@ -201,11 +214,11 @@ export class AuthService {
           console.log('Error body:', error.error);
           console.log('Mensaje de error:', error.error?.message || error.message);
           console.log('================================');
-          
+
           this.responseStatus.set(error.status || 500);
-          
+
           const errorMessage = error.error?.message || 'El usuario no existe o las credenciales son incorrectas.';
-          
+
           const loginResponse: LoginResponse = {
             success: false,
             message: `Error: ${errorMessage}`,
@@ -246,7 +259,7 @@ export class AuthService {
       phoneNumber
     };
 
-    // Nota: Los campos adicionales (direccion para compradores, redesSociales, horariosRestaurante, 
+    // Nota: Los campos adicionales (direccion para compradores, redesSociales, horariosRestaurante,
     // direccionRestaurante para vendedores) NO se envían al backend en el registro inicial.
     // Estos campos pueden ser parte de un proceso de actualización de perfil posterior.
 
@@ -255,17 +268,17 @@ export class AuthService {
         next: (response: any) => {
           console.log(response);
           this.responseStatus.set(response.status);
-          
+
           // Establecer sesión con el rol registrado para que la UI muestre las opciones correctas
           const isSeller = role === 'vendedor';
           // Para vendedores, usar direccionRestaurante si existe, para compradores usar direccionCliente
-          const address = isSeller && vendedorData?.direccionRestaurante 
-            ? vendedorData.direccionRestaurante 
+          const address = isSeller && vendedorData?.direccionRestaurante
+            ? vendedorData.direccionRestaurante
             : (!isSeller ? direccionCliente || null : null);
           // Cuando un vendedor se registra, su estado inicial es 'pendiente'
           const sellerState = isSeller ? 'pendiente' : null;
           this.setSession(role || null, isSeller ? false : null, fullName || null, email || null, phoneNumber || null, address, sellerState);
-          
+
           const registerResponse: RegisterResponse = {
             success: true,
             message: 'Registro exitoso',
@@ -278,9 +291,9 @@ export class AuthService {
         error: (error: any) => {
           console.log(error);
           this.responseStatus.set(error.status || 500);
-          
+
           const errorMessage = error.error?.message || 'Error al registrar. Por favor, intenta nuevamente.';
-          
+
           const registerResponse: RegisterResponse = {
             success: false,
             message: `Error: ${errorMessage}`,
