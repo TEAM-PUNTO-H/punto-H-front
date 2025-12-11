@@ -78,7 +78,13 @@
           </div>
         </div>
 
-        <form class="review-form" (ngSubmit)="submitReview()" #reviewForm="ngForm">
+        <!-- Mensaje cuando el usuario es dueño del restaurante -->
+        <div *ngIf="isOwnerOfRestaurant()" class="owner-message">
+          <p>⚠️ No puedes comentar en tu propio restaurante. Puedes ver las reseñas de otros usuarios a continuación.</p>
+        </div>
+
+        <!-- Formulario de reseña (solo visible si no es el dueño) -->
+        <form *ngIf="!isOwnerOfRestaurant()" class="review-form" (ngSubmit)="submitReview()" #reviewForm="ngForm">
           <h4>Escribe tu reseña</h4>
           <div class="form-grid">
             <div class="input-group name-field">

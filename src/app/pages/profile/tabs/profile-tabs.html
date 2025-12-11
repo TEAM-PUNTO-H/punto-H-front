@@ -2,11 +2,9 @@
   <nav class="tabs-nav">
     <button class="tab-btn" [class.active]="active==='dashboard'" (click)="setTab('dashboard')">Dashboard</button>
     <button class="tab-btn" [class.active]="active==='info-personal'" (click)="setTab('info-personal')">Información Personal</button>
-    <button class="tab-btn" [class.active]="active==='historial-pedidos'" (click)="setTab('historial-pedidos')">Historial de Pedidos</button>
     <button class="tab-btn" [class.active]="active==='resenas-favoritos'" (click)="setTab('resenas-favoritos')">Reseñas y Favoritos</button>
     <button class="tab-btn" [class.active]="active==='seguridad'" (click)="setTab('seguridad')">Seguridad</button>
-    <button class="tab-btn" [class.active]="active==='solicitudes-vendedor'" (click)="setTab('solicitudes-vendedor')">Solicitudes de Vendedor</button>
-    <button class="tab-btn" [class.active]="active==='mi-restaurante'" (click)="setTab('mi-restaurante')">Mi Restaurante</button>
+    <button *ngIf="showSellerRequestsTab" class="tab-btn" [class.active]="active==='solicitudes-vendedor'" (click)="setTab('solicitudes-vendedor')">Solicitudes de Vendedor</button>
+    <button *ngIf="showSellerTab" class="tab-btn" [class.active]="active==='mi-restaurante'" (click)="setTab('mi-restaurante')">Mi Restaurante</button>
   </nav>
 </div>
-

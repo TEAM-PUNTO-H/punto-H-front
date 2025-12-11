@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-personal-info-tab',
@@ -9,18 +10,36 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
   templateUrl: './personal-info-tab.html',
   styleUrls: ['./personal-info-tab.css']
 })
-export class PersonalInfoTabComponent {
+export class PersonalInfoTabComponent implements OnInit {
   profileForm: FormGroup;
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private auth: AuthService
+  ) {
     this.profileForm = this.fb.group({
-      name: ['Juan Pérez García', [Validators.required]],
-      email: [{value: 'juan.perez@universidad.edu', disabled: true}],
-      phone: ['+52 555 123 4567', Validators.required],
-      address: ['Av. Universidad 123, Col. Centro, Ciudad Universitaria'],
+      name: ['', [Validators.required]],
+      email: [{value: '', disabled: true}],
+      phone: ['', Validators.required],
+      address: [''],
       notificationsEmail: [true],
       notificationsPush: [true],
       promotions: [false]
+    });
+  }
+
+  ngOnInit() {
+    // Cargar datos del usuario desde el AuthService
+    const fullName = this.auth.userFullName() || '';
+    const email = this.auth.userEmail() || '';
+    const phone = this.auth.userPhone() || '';
+    const address = this.auth.userAddress() || '';
+
+    this.profileForm.patchValue({
+      name: fullName,
+      email: email,
+      phone: phone,
+      address: address
     });
   }
 

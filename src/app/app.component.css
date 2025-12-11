@@ -58,6 +58,11 @@
   color: #ff7b00;
 }
 
+.nav-links a.active {
+  color: #ff7b00;
+  font-weight: 600;
+}
+
 .header-right {
   display: flex;
   align-items: center;
@@ -110,6 +115,24 @@
   text-decoration: none;
   display: inline-block;
   transition: background 0.2s;
+}
+
+.logout-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-block;
+  transition: background 0.2s;
+  font-size: 14px;
+}
+
+.logout-btn:hover {
+  background: #c82333;
 }
 
 .login-btn:hover {

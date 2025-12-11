@@ -1,10 +1,23 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CreateRestaurantFormComponent } from '../create-restaurant-form/create-restaurant-form';
 import { RestaurantDashboardComponent } from '../restaurant-dashboard/restaurant-dashboard';
 import { DishesListComponent, Dish } from '../dishes-list/dishes-list';
-import { DishFormComponent, Dish as DishFormData } from '../dish-form/dish-form';
+import { DishFormComponent } from '../dish-form/dish-form';
 import { CatalogService } from '../../../catalog/catalog.service';
+import { AuthService } from '../../../../services/auth.service';
+import { MessageModalComponent, MessageType } from '../../../../shared/components/message-modal/message-modal';
+import { HttpClient } from '@angular/common/http';
+
+// Tipo local para el formulario de platos (evita dependencia circular)
+type DishFormData = {
+  id?: string;
+  nombre: string;
+  descripcion: string;
+  precio: number;
+  imagen: string | File | null;
+  nivelPicante: 'ninguno' | 'bajo' | 'medio' | 'alto';
+};
 
 type DishFormType = DishFormData;
 
@@ -18,12 +31,13 @@ type SellerView = 'create-restaurant' | 'dashboard' | 'dishes' | 'add-dish' | 'e
     CreateRestaurantFormComponent,
     RestaurantDashboardComponent,
     DishesListComponent,
-    DishFormComponent
+    DishFormComponent,
+    MessageModalComponent
   ],
   templateUrl: './seller-tab.html',
   styleUrls: ['./seller-tab.css']
 })
-export class SellerTabComponent {
+export class SellerTabComponent implements OnInit {
   currentView: SellerView = 'create-restaurant';
   hasRestaurant: boolean = false;
   editingDishId: string | null = null;
@@ -33,9 +47,94 @@ export class SellerTabComponent {
 
   private readonly STORAGE_KEY = 'seller_restaurant_id';
 
-  constructor(private catalogService: CatalogService) {
+  // Estado del modal
+  modalOpen: boolean = false;
+  modalMessage: string = '';
+  modalType: MessageType = 'info';
+  
+  // Estado para productos
+  savingDish: boolean = false;
+  dishError: string | null = null;
+
+  private http = inject(HttpClient);
+  private readonly API_URL = 'http://104.237.5.100:3000/api/products';
+
+  constructor(
+    private catalogService: CatalogService,
+    private authService: AuthService
+  ) {
     this.loadRestaurantState();
     this.initializeView();
+  }
+
+  ngOnInit() {
+    // Mostrar modal solo si es vendedor (no admin) y está pendiente o denegado
+    if (!this.isAdmin() && this.isSellerPending) {
+      this.showPendingModal();
+    } else if (!this.isAdmin() && this.isSellerDenied) {
+      this.showDeniedModal();
+    }
+  }
+
+  /**
+   * Verifica si el usuario actual es administrador
+   */
+  isAdmin(): boolean {
+    const role = this.authService.userRole();
+    return role === 'admin' || role === 'administrador' || role === 'moderador';
+  }
+
+  showPendingModal() {
+    this.modalMessage = 'Tu solicitud para convertirte en vendedor está en proceso. Recibirás una notificación cuando sea aprobada.';
+    this.modalType = 'info';
+    this.modalOpen = true;
+  }
+
+  showDeniedModal() {
+    this.modalMessage = 'Tu solicitud para convertirte en vendedor ha sido denegada. Si crees que esto es un error, por favor contacta con el administrador.';
+    this.modalType = 'error';
+    this.modalOpen = true;
+  }
+
+  onModalClose() {
+    this.modalOpen = false;
+  }
+
+  get isSellerApproved(): boolean {
+    const role = this.authService.userRole();
+    const state = this.authService.sellerState();
+    
+    // Los admins siempre tienen acceso completo
+    if (this.isAdmin()) {
+      return true;
+    }
+    
+    // Vendedor está aprobado si el estado es 'activo'
+    return role === 'vendedor' && state === 'activo';
+  }
+
+  get isSellerPending(): boolean {
+    // Los admins nunca están pendientes
+    if (this.isAdmin()) {
+      return false;
+    }
+    
+    const role = this.authService.userRole();
+    const state = this.authService.sellerState();
+    // Vendedor está pendiente si el estado es 'pendiente'
+    return role === 'vendedor' && state === 'pendiente';
+  }
+
+  get isSellerDenied(): boolean {
+    // Los admins nunca están denegados
+    if (this.isAdmin()) {
+      return false;
+    }
+    
+    const role = this.authService.userRole();
+    const state = this.authService.sellerState();
+    // Vendedor está denegado si el estado es 'denegado'
+    return role === 'vendedor' && state === 'denegado';
   }
 
   private loadRestaurantState() {
@@ -112,23 +211,66 @@ export class SellerTabComponent {
   onSaveDish(dishData: DishFormData) {
     if (!this.restaurantId) {
       console.error('No hay restaurante asociado');
-      alert('Error: No se encontró el restaurante. Por favor, recarga la página.');
+      this.showErrorModal('Error: No se encontró el restaurante. Por favor, recarga la página.');
+      return;
+    }
+
+    const userId = this.authService.userId();
+    if (!userId) {
+      this.showErrorModal('Error: No se pudo obtener el ID del usuario. Por favor, inicia sesión nuevamente.');
       return;
     }
 
     if (this.editingDishId) {
       // Actualizar plato existente - por simplicidad, eliminamos y agregamos de nuevo
-      // En producción, esto sería una actualización real
+      // En producción, esto sería una actualización real con un endpoint de actualización
       this.catalogService.removeDishFromRestaurant(this.restaurantId, this.editingDishId);
       this.catalogService.addDishToRestaurant(this.restaurantId, dishData);
       console.log('Plato actualizado:', dishData);
+      this.currentView = 'dishes';
+      this.editingDishId = null;
     } else {
-      // Agregar nuevo plato al catálogo
-      this.catalogService.addDishToRestaurant(this.restaurantId, dishData);
-      console.log('Plato agregado:', dishData);
+      // Crear nuevo plato en el backend
+      this.savingDish = true;
+      this.dishError = null;
+
+      const productData = {
+        id_user: userId,
+        name: dishData.nombre,
+        description: dishData.descripcion,
+        price: Number(dishData.precio)
+      };
+
+      this.http.post(`${this.API_URL}/createProduct`, productData, { withCredentials: true }).subscribe({
+        next: (response: any) => {
+          console.log('Producto creado exitosamente:', response);
+          this.savingDish = false;
+          
+          // Agregar el plato al catálogo local con el ID del backend si viene
+          const dishWithId = {
+            ...dishData,
+            id: response.id || response.product?.id || `dish-${Date.now()}`
+          };
+          this.catalogService.addDishToRestaurant(this.restaurantId!, dishWithId);
+          
+          this.currentView = 'dishes';
+          this.editingDishId = null;
+        },
+        error: (error: any) => {
+          console.error('Error al crear producto:', error);
+          this.savingDish = false;
+          const errorMessage = error.error?.message || 'Error al crear el producto. Por favor, intenta nuevamente.';
+          this.dishError = errorMessage;
+          this.showErrorModal(errorMessage);
+        }
+      });
     }
-    this.currentView = 'dishes';
-    this.editingDishId = null;
+  }
+
+  showErrorModal(message: string) {
+    this.modalMessage = message;
+    this.modalType = 'error';
+    this.modalOpen = true;
   }
 
   onCancelDishForm() {
@@ -171,4 +313,3 @@ export class SellerTabComponent {
     } as DishFormType;
   }
 }
-

@@ -10,7 +10,6 @@
     <section class="tab-content">
       <app-dashboard-tab *ngIf="activeTab === 'dashboard'" (navigateToTab)="onTabChange($event)"></app-dashboard-tab>
       <app-personal-info-tab *ngIf="activeTab === 'personal'"></app-personal-info-tab>
-      <app-orders-tab *ngIf="activeTab === 'orders'"></app-orders-tab>
       <app-reviews-favorites-tab *ngIf="activeTab === 'reviews'"></app-reviews-favorites-tab>
       <app-security-tab *ngIf="activeTab === 'security'"></app-security-tab>
       <app-seller-requests-tab *ngIf="activeTab === 'seller-requests'"></app-seller-requests-tab>

@@ -43,3 +43,43 @@
   margin-top: 0.2rem;
 }
 
+/* Estilos para campos de vendedor */
+.vendedor-fields {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.section-divider {
+  text-align: center;
+  margin: 1rem 0 1.5rem 0;
+  position: relative;
+}
+
+.section-divider span {
+  background: #fff;
+  padding: 0 1rem;
+  color: #6b7280;
+  font-size: 0.9rem;
+  font-weight: 500;
+  position: relative;
+}
+
+.section-divider::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+.field-hint {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  font-style: italic;
+}
+

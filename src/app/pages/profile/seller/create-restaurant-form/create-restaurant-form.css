@@ -70,6 +70,17 @@
   font-weight: 400;
 }
 
+.error-message {
+  padding: 1rem;
+  background-color: #fee2e2;
+  border: 1px solid #ef4444;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
 .time-range {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -161,4 +172,3 @@
     font-size: 1.5rem;
   }
 }
-

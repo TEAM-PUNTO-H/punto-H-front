@@ -1,49 +1,77 @@
 <div class="seller-tab-wrap">
-  <!-- Vista: Crear Restaurante -->
-  <app-create-restaurant-form 
-    *ngIf="currentView === 'create-restaurant' && !hasRestaurant"
-    (restaurantCreated)="onRestaurantCreated($event)">
-  </app-create-restaurant-form>
-
-  <!-- Vista: Panel de Administración -->
-  <app-restaurant-dashboard 
-    *ngIf="currentView === 'dashboard' && hasRestaurant"
-    [restaurantId]="restaurantId"
-    (navigateTo)="navigateTo($event)">
-  </app-restaurant-dashboard>
-
-  <!-- Vista: Lista de Platos -->
-  <app-dishes-list 
-    *ngIf="currentView === 'dishes'"
-    [restaurantId]="restaurantId"
-    (navigateTo)="navigateTo($event)"
-    (editDish)="onEditDish($event)"
-    (deleteDish)="onDeleteDish($event)">
-  </app-dishes-list>
-
-  <!-- Vista: Agregar Plato -->
-  <app-dish-form 
-    *ngIf="currentView === 'add-dish'"
-    [isEditMode]="false"
-    (saveDish)="onSaveDish($event)"
-    (cancel)="onCancelDishForm()">
-  </app-dish-form>
-
-  <!-- Vista: Editar Plato -->
-  <app-dish-form 
-    *ngIf="currentView === 'edit-dish'"
-    [isEditMode]="true"
-    [dish]="getDishToEdit()"
-    (saveDish)="onSaveDish($event)"
-    (deleteDish)="onDeleteDish($event)"
-    (cancel)="onCancelDishForm()">
-  </app-dish-form>
-
-  <!-- Vista: Editar Restaurante (placeholder) -->
-  <div *ngIf="currentView === 'edit-restaurant'" class="placeholder-view">
-    <h2>Editar Restaurante</h2>
-    <p>Funcionalidad de edición de restaurante próximamente disponible.</p>
-    <button class="btn-orange" (click)="navigateTo('dashboard')">Volver al Panel</button>
+  <!-- Mensaje cuando el vendedor está pendiente de aprobación -->
+  <div *ngIf="isSellerPending" class="pending-approval-message">
+    <div class="message-icon">⏳</div>
+    <h2>Tu solicitud está en proceso</h2>
+    <p>Estamos procesando tu solicitud para convertirte en vendedor. Recibirás una notificación cuando sea aprobada.</p>
+    <p class="message-subtitle">Mientras tanto, puedes explorar otras secciones de tu perfil.</p>
   </div>
-</div>
 
+  <!-- Mensaje cuando el vendedor está denegado -->
+  <div *ngIf="isSellerDenied" class="denied-approval-message">
+    <div class="message-icon">❌</div>
+    <h2>Tu solicitud ha sido denegada</h2>
+    <p>Lamentamos informarte que tu solicitud para convertirte en vendedor ha sido denegada.</p>
+    <p class="message-subtitle">Si crees que esto es un error, por favor contacta con el administrador del sistema.</p>
+  </div>
+
+  <!-- Contenido normal cuando el vendedor está aprobado o es admin -->
+  <ng-container *ngIf="isSellerApproved">
+    <!-- Vista: Crear Restaurante -->
+    <app-create-restaurant-form 
+      *ngIf="currentView === 'create-restaurant' && !hasRestaurant"
+      (restaurantCreated)="onRestaurantCreated($event)">
+    </app-create-restaurant-form>
+
+    <!-- Vista: Panel de Administración -->
+    <app-restaurant-dashboard 
+      *ngIf="currentView === 'dashboard' && hasRestaurant"
+      [restaurantId]="restaurantId"
+      (navigateTo)="navigateTo($event)">
+    </app-restaurant-dashboard>
+
+    <!-- Vista: Lista de Platos -->
+    <app-dishes-list 
+      *ngIf="currentView === 'dishes'"
+      [restaurantId]="restaurantId"
+      (navigateTo)="navigateTo($event)"
+      (editDish)="onEditDish($event)"
+      (deleteDish)="onDeleteDish($event)">
+    </app-dishes-list>
+
+    <!-- Vista: Agregar Plato -->
+    <app-dish-form 
+      *ngIf="currentView === 'add-dish'"
+      [isEditMode]="false"
+      [loading]="savingDish"
+      (saveDish)="onSaveDish($event)"
+      (cancel)="onCancelDishForm()">
+    </app-dish-form>
+
+    <!-- Vista: Editar Plato -->
+    <app-dish-form 
+      *ngIf="currentView === 'edit-dish'"
+      [isEditMode]="true"
+      [dish]="getDishToEdit()"
+      [loading]="savingDish"
+      (saveDish)="onSaveDish($event)"
+      (deleteDish)="onDeleteDish($event)"
+      (cancel)="onCancelDishForm()">
+    </app-dish-form>
+
+    <!-- Vista: Editar Restaurante (placeholder) -->
+    <div *ngIf="currentView === 'edit-restaurant'" class="placeholder-view">
+      <h2>Editar Restaurante</h2>
+      <p>Funcionalidad de edición de restaurante próximamente disponible.</p>
+      <button class="btn-orange" (click)="navigateTo('dashboard')">Volver al Panel</button>
+    </div>
+  </ng-container>
+
+  <!-- Modal de mensaje cuando el vendedor está pendiente -->
+  <app-message-modal
+    [isOpen]="modalOpen"
+    [messageType]="modalType"
+    [message]="modalMessage"
+    (close)="onModalClose()">
+  </app-message-modal>
+</div>

@@ -1,0 +1,19 @@
+<div 
+  class="modal-backdrop" 
+  *ngIf="isOpen"
+  (click)="onBackdropClick($event)"
+>
+  <div class="modal-container" [ngClass]="modalClass" (click)="$event.stopPropagation()">
+    <button class="close-btn" (click)="closeModal()" title="Cerrar">✕</button>
+    <div class="modal-content">
+      <div class="icon-container">
+        <span class="modal-icon">{{ icon }}</span>
+      </div>
+      <h3 class="modal-title" *ngIf="messageType === 'success'">Éxito</h3>
+      <h3 class="modal-title" *ngIf="messageType === 'error'">Error</h3>
+      <h3 class="modal-title" *ngIf="messageType === 'info'">Información</h3>
+      <p class="modal-message">{{ message }}</p>
+      <button class="modal-button" (click)="closeModal()">Aceptar</button>
+    </div>
+  </div>
+</div>

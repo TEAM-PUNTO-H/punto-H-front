@@ -78,8 +78,9 @@
       <button 
         type="submit" 
         class="btn-orange-large" 
-        [disabled]="dishForm.invalid">
-        {{ isEditMode ? 'Actualizar Plato' : 'Guardar Plato' }}
+        [disabled]="dishForm.invalid || loading">
+        <span *ngIf="!loading">{{ isEditMode ? 'Actualizar Plato' : 'Guardar Plato' }}</span>
+        <span *ngIf="loading">Guardando...</span>
       </button>
       <button 
         *ngIf="isEditMode" 
