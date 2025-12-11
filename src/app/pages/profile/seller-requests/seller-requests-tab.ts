@@ -35,17 +35,17 @@ export class SellerRequestsTabComponent implements OnInit {
   cargarSolicitudesPendientes() {
     this.loading = true;
     this.error = null;
-    
+
     // Obtener todos los usuarios y filtrar los vendedores
     // withCredentials: true permite enviar cookies de autenticación
     this.http.get<any[]>(`${this.API_URL}/allUsers`, { withCredentials: true }).subscribe({
       next: (response: any) => {
         console.log('Todos los usuarios recibidos:', response);
-        
+
         // Si la respuesta es un array, usarlo directamente
         // Si es un objeto con una propiedad, extraer el array
         const users = Array.isArray(response) ? response : (response.data || response.users || []);
-        
+
         // Filtrar solo vendedores (pendientes, activos y denegados para permitir revertir)
         this.solicitudes = users
           .filter((user: any) => user.role === 'vendedor')
@@ -58,7 +58,7 @@ export class SellerRequestsTabComponent implements OnInit {
             role: user.role || 'vendedor',
             createdAt: user.createdAt || user.fechaSolicitud || new Date().toISOString()
           }));
-        
+
         this.loading = false;
       },
       error: (error: any) => {
@@ -85,7 +85,7 @@ export class SellerRequestsTabComponent implements OnInit {
     const solicitud = this.solicitudes.find(s => s.id === id);
     if (!solicitud) return;
 
-    const mensajeConfirmacion = nuevoEstado === 'activo' 
+    const mensajeConfirmacion = nuevoEstado === 'activo'
       ? `¿Estás seguro de que deseas aprobar esta solicitud?`
       : `¿Estás seguro de que deseas denegar esta solicitud?`;
 
@@ -96,30 +96,25 @@ export class SellerRequestsTabComponent implements OnInit {
 
       // Obtener los datos actuales del usuario para enviarlos en la actualización
       const updateData = {
-        state: nuevoEstado,
-        // Mantener los demás campos del usuario
-        email: solicitud.email,
-        phoneNumber: solicitud.phoneNumber || '',
-        fullName: solicitud.fullName,
-        role: solicitud.role
+        state: nuevoEstado
       };
 
       // Actualizar el estado del usuario en el backend
       // withCredentials: true permite enviar cookies de autenticación
-      this.http.patch(`${this.API_URL}/updateUser/${id}`, updateData, { withCredentials: true }).subscribe({
+      this.http.put(`${this.API_URL}/updateUser/${id}`, updateData).subscribe({
         next: (response: any) => {
           console.log(`Usuario ${accion}:`, response);
-          
+
           // Actualizar el estado localmente
           solicitud.state = nuevoEstado;
-          
+
           const mensaje = nuevoEstado === 'activo'
             ? `Solicitud de ${solicitud.fullName} aprobada exitosamente.`
             : `Solicitud de ${solicitud.fullName} denegada.`;
-          
+
           this.successMessage = mensaje;
           this.loading = false;
-          
+
           // Recargar la lista después de un breve delay
           setTimeout(() => {
             this.cargarSolicitudesPendientes();
